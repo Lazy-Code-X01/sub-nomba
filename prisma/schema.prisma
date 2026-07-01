@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+
+enum PlanInterval {
+  MONTHLY
+  ANNUAL
+  CUSTOM
+}
+
+enum SubscriptionStatus {
+  CREATED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  VOID
+}
+
+enum DunningStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum WebhookEventStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+// Models
+
+model Tenant {
+  id            String   @id @default(uuid())
+  name          String
+  apiKey        String   @unique
+  webhookUrl    String?
+  webhookSecret String?
+  createdAt     DateTime @default(now())
+
+  plans         Plan[]
+  customers     Customer[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  webhookEvents WebhookEvent[]
+  idempotencyKeys IdempotencyKey[]
+
+  @@index([apiKey])
+}
+
+model Plan {
+  id            String       @id @default(uuid())
+  tenantId      String
+  name          String
+  amount        Int
+  currency      String       @default("NGN")
+  interval      PlanInterval
+  intervalCount Int          @default(1)
+  trialDays     Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+}
+
+model Customer {
+  id               String   @id @default(uuid())
+  tenantId         String
+  email            String
+  name             String
+  nombaCustomerId  String?
+  tokenisedCard    String?
+  createdAt        DateTime @default(now())
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+  invoices      Invoice[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model Subscription {
+  id                  String             @id @default(uuid())
+  tenantId            String
+  customerId          String
+  planId              String
+  status              SubscriptionStatus @default(CREATED)
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  trialEnd            DateTime?
+  pausedAt            DateTime?
+  cancelledAt         DateTime?
+  nombaSubscriptionRef String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer  Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  plan      Plan       @relation(fields: [planId], references: [id])
+  invoices  Invoice[]
+  dunningAttempts DunningAttempt[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([customerId])
+  @@index([currentPeriodEnd])
+}
+
+model Invoice {
+  id             String        @id @default(uuid())
+  tenantId       String
+  subscriptionId String
+  customerId     String
+  amount         Int
+  currency       String        @default("NGN")
+  status         InvoiceStatus @default(PENDING)
+  dueDate        DateTime
+  paidAt         DateTime?
+  nombaOrderRef  String?       // Nomba-generated orderReference from checkout
+  nombaChargeRef String?       // Nomba transactionId set on successful payment
+  createdAt      DateTime      @default(now())
+
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscription  Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  customer      Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  dunningAttempts DunningAttempt[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([subscriptionId])
+  @@index([nombaOrderRef])
+}
+
+model DunningAttempt {
+  id              String        @id @default(uuid())
+  invoiceId       String
+  subscriptionId  String
+  attemptNumber   Int
+  status          DunningStatus @default(PENDING)
+  scheduledAt     DateTime
+  executedAt      DateTime?
+  nombaChargeRef  String?
+  failureReason   String?
+  createdAt       DateTime      @default(now())
+
+  invoice      Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([subscriptionId])
+  @@index([scheduledAt])
+}
+
+model WebhookEvent {
+  id            String             @id @default(uuid())
+  tenantId      String
+  eventType     String
+  payload       Json
+  status        WebhookEventStatus @default(PENDING)
+  attempts      Int                @default(0)
+  lastAttemptAt DateTime?
+  nextRetryAt   DateTime?
+  createdAt     DateTime           @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([nextRetryAt])
+}
+
+model IdempotencyKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  tenantId  String
+  response  Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([expiresAt])
+}
