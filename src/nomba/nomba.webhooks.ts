@@ -7,12 +7,24 @@ import { transition, canTransition } from '../modules/subscriptions/state-machin
 import { enqueueDunning } from '../queues/dunning.queue';
 import { dispatchWebhook } from '../modules/webhooks/webhooks.dispatcher';
 
+interface NombaSignatureFields {
+  event: string;
+  requestId: string;
+  merchant: { userId: string; walletId: string };
+}
+
 export function verifyNombaWebhookSignature(
-  rawBody: string,
+  payload: NombaSignatureFields,
   signature: string,
   secret: string,
 ): boolean {
-  const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
+  const sigString = [
+    payload.event,
+    payload.requestId ?? '',
+    payload.merchant?.userId ?? '',
+    payload.merchant?.walletId ?? '',
+  ].join(':');
+  const expected = createHmac('sha256', secret).update(sigString).digest('hex');
   try {
     return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
   } catch {
@@ -38,6 +50,11 @@ interface NombaPaymentFailedData {
 
 interface NombaWebhookPayload {
   event: string;
+  requestId: string;
+  merchant: {
+    userId: string;
+    walletId: string;
+  };
   data: NombaPaymentSuccessData | NombaPaymentFailedData;
 }
 
@@ -132,7 +149,16 @@ export function nombaWebhookHandler(req: Request, res: Response): void {
   const rawBody = (req.body as Buffer).toString('utf8');
   const signature = (req.headers['nomba-signature'] as string) ?? '';
 
-  if (!verifyNombaWebhookSignature(rawBody, signature, env.nomba.webhookSecret)) {
+  let payload: NombaWebhookPayload;
+  try {
+    payload = JSON.parse(rawBody) as NombaWebhookPayload;
+  } catch {
+    console.error('[Nomba Webhook] failed to parse body');
+    res.sendStatus(200);
+    return;
+  }
+
+  if (!verifyNombaWebhookSignature(payload, signature, env.nomba.webhookSecret)) {
     // Return 200 even on bad signature to avoid leaking timing information to an attacker
     console.warn('[Nomba Webhook] signature verification failed');
     res.sendStatus(200);
@@ -140,14 +166,6 @@ export function nombaWebhookHandler(req: Request, res: Response): void {
   }
 
   res.sendStatus(200);
-
-  let payload: NombaWebhookPayload;
-  try {
-    payload = JSON.parse(rawBody) as NombaWebhookPayload;
-  } catch {
-    console.error('[Nomba Webhook] failed to parse body');
-    return;
-  }
 
   const { event, data } = payload;
   console.log(`[Nomba Webhook] received: ${event}`);
