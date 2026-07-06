@@ -13,16 +13,7 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// Inject API key per-request so localStorage key takes effect immediately after signup
-api.interceptors.request.use(config => {
-  let key = process.env.NEXT_PUBLIC_API_KEY ?? "";
-  if (typeof window !== "undefined") {
-    const lsKey = localStorage.getItem("sub_api_key");
-    if (lsKey) key = lsKey;
-  }
-  config.headers["x-api-key"] = key;
-  return config;
-});
+// API key is injected server-side by the proxy route via httpOnly JWT cookie
 
 // Unwrap the { success, data, message } envelope
 api.interceptors.response.use(

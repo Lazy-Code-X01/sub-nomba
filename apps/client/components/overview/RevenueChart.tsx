@@ -20,6 +20,22 @@ const PAD = { top: 20, right: 20, bottom: 44, left: 60 };
 const IW  = W - PAD.left - PAD.right;
 const IH  = H - PAD.top  - PAD.bottom;
 
+function computeYAxis(dataMax: number): { ticks: number[]; scale: number } {
+  if (dataMax === 0) return { ticks: [0, 25, 50, 75, 100], scale: 100 };
+  const roughStep = dataMax / 4;
+  const power = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const norm  = roughStep / power;
+  const step  = norm < 1.5  ? power
+              : norm < 2.25 ? 2 * power
+              : norm < 3.75 ? 2.5 * power
+              : norm < 7.5  ? 5 * power
+              : 10 * power;
+  const scale  = step * (Math.ceil(dataMax / step) + 1);
+  const ticks: number[] = [];
+  for (let v = 0; v <= scale + step * 0.01; v += step) ticks.push(Math.round(v));
+  return { ticks, scale };
+}
+
 function smooth(pts: [number, number][]): string {
   return pts.map(([x, y], i) => {
     if (i === 0) return `M ${x} ${y}`;
@@ -68,17 +84,15 @@ export default function RevenueChart({ data }: { data: ChartPoint[] }) {
     );
   }
 
-  const maxVal  = Math.max(...data.map(d => d.revenue), 1) * 1.18;
+  const dataMax = Math.max(...data.map(d => d.revenue), 0);
+  const { ticks: yTicks, scale: maxVal } = computeYAxis(dataMax);
+
   const toX = (i: number) => data.length === 1 ? PAD.left + IW / 2 : PAD.left + (i / (data.length - 1)) * IW;
   const toY = (v: number) => PAD.top + (1 - v / maxVal) * IH;
   const baseline = PAD.top + IH;
 
   const revPts: [number, number][] = data.map((d, i) => [toX(i), toY(d.revenue)]);
   const refPts: [number, number][] = data.map((d, i) => [toX(i), toY(d.refunds)]);
-
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(t =>
-    Math.round((maxVal * t) / 1000) * 1000
-  );
 
   const hovered = hoverIdx !== null ? data[hoverIdx] : null;
   const hx = hoverIdx !== null ? toX(hoverIdx) : 0;
@@ -117,8 +131,8 @@ export default function RevenueChart({ data }: { data: ChartPoint[] }) {
                   stroke="var(--border)" strokeWidth="1" strokeDasharray="5 6"
                 />
                 <text
-                  x={PAD.left - 8} y={y + 4}
-                  textAnchor="end" fill="var(--text3)"
+                  x={8} y={y + 4}
+                  textAnchor="start" fill="var(--text3)"
                   fontSize="10" fontFamily="var(--font-jetbrains)"
                 >
                   {fmtTick(v)}
@@ -157,6 +171,13 @@ export default function RevenueChart({ data }: { data: ChartPoint[] }) {
             fill="none" stroke="var(--red)"
             strokeWidth="1.5" strokeDasharray="5 4" strokeLinecap="round"
           />
+
+          {data.length === 1 && (
+            <circle
+              cx={toX(0)} cy={toY(data[0].revenue)} r="5"
+              fill="var(--yellow)" stroke="var(--surface)" strokeWidth="2.5"
+            />
+          )}
 
           {hoverIdx !== null && hovered && (
             <g>

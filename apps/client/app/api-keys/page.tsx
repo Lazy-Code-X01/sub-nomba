@@ -4,9 +4,15 @@ import { useState, useEffect } from "react";
 import { Eye, EyeOff, Copy, Check, RefreshCcw, AlertTriangle, Key, Webhook } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { apiPost } from "@/lib/api";
 
-interface Tenant { id: string; apiKey: string; name: string; }
+interface Session {
+  tenantId:      string;
+  tenantName:    string;
+  email:         string;
+  apiKey:        string;
+  webhookUrl:    string | null;
+  webhookSecret: string | null;
+}
 
 function maskKey(key: string): string {
   return key.slice(0, 12) + "••••••••••••••••••••••••";
@@ -32,29 +38,26 @@ function CopyButton({ value, size = 13 }: { value: string; size?: number }) {
 }
 
 export default function ApiKeysPage() {
-  const [apiKey,         setApiKey]         = useState<string | null>(null);
-  const [tenantId,       setTenantId]       = useState<string | null>(null);
-  const [webhookUrl,     setWebhookUrl]     = useState<string | null>(null);
-  const [webhookSecret,  setWebhookSecret]  = useState<string | null>(null);
-  const [showKey,        setShowKey]        = useState(false);
-  const [showSecret,     setShowSecret]     = useState(false);
-  const [rotating,       setRotating]       = useState(false);
+  const [session,      setSession]      = useState<Session | null>(null);
+  const [showKey,      setShowKey]      = useState(false);
+  const [showSecret,   setShowSecret]   = useState(false);
+  const [rotating,     setRotating]     = useState(false);
 
   useEffect(() => {
-    setApiKey(localStorage.getItem("sub_api_key") ?? process.env.NEXT_PUBLIC_API_KEY ?? null);
-    setTenantId(localStorage.getItem("sub_tenant_id"));
-    setWebhookUrl(localStorage.getItem("sub_webhook_url") || null);
-    setWebhookSecret(localStorage.getItem("sub_webhook_secret") || null);
+    fetch("/api/auth/me")
+      .then(r => r.json())
+      .then(j => { if (j.data) setSession(j.data as Session); })
+      .catch(() => {});
   }, []);
 
   async function handleRotate() {
-    if (!tenantId) return;
     if (!confirm("Rotate your API key? Your current key will stop working immediately.")) return;
     setRotating(true);
     try {
-      const tenant = await apiPost<Tenant>(`/api/v1/tenants/${tenantId}/rotate-key`);
-      localStorage.setItem("sub_api_key", tenant.apiKey);
-      setApiKey(tenant.apiKey);
+      const res  = await fetch("/api/auth/rotate-key", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message ?? "Failed to rotate key");
+      setSession(prev => prev ? { ...prev, apiKey: json.data.apiKey } : prev);
       setShowKey(true);
     } catch (err) {
       alert((err as Error).message ?? "Failed to rotate key");
@@ -63,9 +66,14 @@ export default function ApiKeysPage() {
     }
   }
 
+  const apiKey        = session?.apiKey        ?? null;
+  const webhookUrl    = session?.webhookUrl    ?? null;
+  const webhookSecret = session?.webhookSecret ?? null;
+  const tenantId      = session?.tenantId      ?? null;
+
   const displayKey    = apiKey
     ? (showKey    ? apiKey          : maskKey(apiKey))
-    : "No key found — sign in to see your key";
+    : "Loading…";
 
   const displaySecret = webhookSecret
     ? (showSecret ? webhookSecret   : maskKey(webhookSecret))
@@ -105,7 +113,7 @@ app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) 
       <div className="flex items-start gap-3 px-4 py-3.5 bg-surface-2 border border-stroke rounded-xl">
         <AlertTriangle size={14} className="text-yellow flex-shrink-0 mt-0.5" />
         <p className="font-sans text-[12px] text-label-2 leading-relaxed">
-          Your API key is stored in your browser. Never expose it in client-side code in production — use it only from your backend server.
+          Never expose your API key in client-side code. Use it only from your backend server.
         </p>
       </div>
 

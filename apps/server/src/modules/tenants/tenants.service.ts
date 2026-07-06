@@ -12,11 +12,14 @@ function generateWebhookSecret(): string {
 }
 
 export async function createTenant(input: CreateTenantInput) {
+  const id = randomBytes(8).toString('hex');
   return prisma.tenant.create({
     data: {
-      name: input.name,
-      apiKey: generateApiKey(),
-      webhookUrl: input.webhookUrl,
+      name:          input.name,
+      email:         `legacy_${id}@placeholder.local`,
+      passwordHash:  '',
+      apiKey:        generateApiKey(),
+      webhookUrl:    input.webhookUrl,
       webhookSecret: input.webhookSecret ?? generateWebhookSecret(),
     },
   });

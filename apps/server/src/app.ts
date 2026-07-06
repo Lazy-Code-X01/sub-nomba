@@ -10,6 +10,7 @@ import { startDunningWorker } from './queues/dunning.processor';
 import { startBillingWorker } from './queues/billing.queue';
 
 import tenantsRouter from './modules/tenants/tenants.routes';
+import authRouter from './modules/auth/auth.routes';
 import plansRouter from './modules/plans/plans.routes';
 import customersRouter from './modules/customers/customers.routes';
 import subscriptionsRouter from './modules/subscriptions/subscriptions.routes';
@@ -33,6 +34,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/v1/tenants', tenantsRouter);
+app.use('/api/v1/auth', authRouter);
 
 // All routes below require tenant API key auth + idempotency support
 app.use('/api/v1', authMiddleware, idempotencyMiddleware);

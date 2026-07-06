@@ -1,25 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { usePathname } from "next/navigation";
 
-const PUBLIC_PATHS = ["/", "/signup", "/docs"];
+const PUBLIC_PATHS = ["/", "/signup", "/login", "/docs"];
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const isPublic = PUBLIC_PATHS.includes(pathname);
-
-  useEffect(() => {
-    if (isPublic) return;
-    const lsKey = localStorage.getItem("sub_api_key");
-    const envKey = process.env.NEXT_PUBLIC_API_KEY;
-    if (!lsKey && !envKey) {
-      router.replace("/signup");
-    }
-  }, [isPublic, router]);
 
   if (isPublic) return <>{children}</>;
 

@@ -85,18 +85,18 @@ function NavItem({
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const [tenantName, setTenantName] = useState("My Business");
 
   useEffect(() => {
-    const name = localStorage.getItem("sub_tenant_name");
-    if (name) setTenantName(name);
+    fetch("/api/auth/me")
+      .then(r => r.json())
+      .then(j => { if (j.data?.tenantName) setTenantName(j.data.tenantName); })
+      .catch(() => {});
   }, []);
 
-  function handleLogout() {
-    localStorage.removeItem("sub_api_key");
-    localStorage.removeItem("sub_tenant_id");
-    localStorage.removeItem("sub_tenant_name");
+  async function handleLogout() {
+    await fetch("/api/auth/signout", { method: "POST" });
     router.push("/");
   }
 

@@ -12,7 +12,7 @@ import SubscriptionDetailPanel from "@/components/subscriptions/SubscriptionDeta
 import NewSubscriptionModal from "@/components/subscriptions/NewSubscriptionModal";
 import { apiGet, apiPost } from "@/lib/api";
 import type { Subscription, Invoice, Customer, Plan } from "@/lib/types";
-import { fmt, fmtDate, subStatusBadge, invStatusBadge, initials } from "@/lib/utils";
+import { fmt, fmtDate, subStatusBadge, initials } from "@/lib/utils";
 
 const TABS = ["All", "Active", "Trialing", "Past Due", "Paused", "Cancelled"] as const;
 type Tab   = typeof TABS[number];

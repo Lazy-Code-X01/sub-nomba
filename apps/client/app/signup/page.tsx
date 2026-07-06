@@ -3,43 +3,53 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
+import AuthLayout from "@/components/auth/AuthLayout";
+import FormField from "@/components/auth/FormField";
+import ErrorBanner from "@/components/auth/ErrorBanner";
+
+type Step = "account" | "webhook";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [step, setStep] = useState<Step>("account");
+
   const [name,          setName]          = useState("");
+  const [email,         setEmail]         = useState("");
+  const [password,      setPassword]      = useState("");
+  const [confirm,       setConfirm]       = useState("");
   const [webhookUrl,    setWebhookUrl]    = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  function handleStep1(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (password !== confirm) { setError("Passwords don't match"); return; }
+    setStep("webhook");
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
     setLoading(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
-      const res = await fetch(`${baseUrl}/api/v1/tenants`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const res = await fetch("/api/auth/signup", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
+          name:  name.trim(),
+          email: email.trim(),
+          password,
           ...(webhookUrl.trim()    ? { webhookUrl:    webhookUrl.trim()    } : {}),
           ...(webhookSecret.trim() ? { webhookSecret: webhookSecret.trim() } : {}),
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message ?? "Failed to create account");
-      const tenant = json.data ?? json;
-      localStorage.setItem("sub_api_key",        tenant.apiKey);
-      localStorage.setItem("sub_tenant_id",       tenant.id);
-      localStorage.setItem("sub_tenant_name",     tenant.name);
-      localStorage.setItem("sub_webhook_secret",  tenant.webhookSecret ?? "");
-      localStorage.setItem("sub_webhook_url",     tenant.webhookUrl    ?? "");
       router.push("/overview");
     } catch (err) {
       setError((err as Error).message ?? "Something went wrong");
@@ -49,97 +59,127 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-canvas flex flex-col items-center justify-center px-6">
-      <Link href="/" className="flex items-center gap-2 mb-10">
-        <Image src="/sub-logo.png" alt="Sub" width={28} height={28} className="rounded-lg" />
-        <span className="font-mono font-bold text-[16px] text-label">Sub</span>
-      </Link>
+    <AuthLayout>
+      <StepBar step={step} />
 
-      <div className="w-full max-w-md">
-        <div className="mb-8">
-          <h1 className="font-sans font-bold text-[24px] text-label mb-2">Create your account</h1>
-          <p className="font-sans text-[13px] text-label-2">
-            You&apos;ll get an API key to start billing customers instantly.
-          </p>
-        </div>
+      {step === "account" ? (
+        <AccountStep
+          name={name}         setName={setName}
+          email={email}       setEmail={setEmail}
+          password={password} setPassword={setPassword}
+          confirm={confirm}   setConfirm={setConfirm}
+          error={error}
+          onSubmit={handleStep1}
+        />
+      ) : (
+        <WebhookStep
+          webhookUrl={webhookUrl}       setWebhookUrl={setWebhookUrl}
+          webhookSecret={webhookSecret} setWebhookSecret={setWebhookSecret}
+          loading={loading}
+          error={error}
+          onBack={() => { setStep("account"); setError(null); }}
+          onSubmit={handleSubmit}
+        />
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-label-3 block mb-1.5">
-              Business Name
-            </span>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full bg-surface border border-stroke rounded-xl px-4 py-3 font-sans text-[14px] text-label placeholder:text-label-3 focus:outline-none focus:border-yellow transition-colors"
-              placeholder="Acme Corp"
-              required
-              autoFocus
-            />
-          </label>
+      <p className="mt-6 text-center font-sans text-[13px] text-label-3">
+        Already have an account?{" "}
+        <Link href="/login" className="text-yellow hover:opacity-80 transition-opacity">
+          Sign in
+        </Link>
+      </p>
+    </AuthLayout>
+  );
+}
 
-          <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-label-3 block mb-1.5">
-              Webhook URL{" "}
-              <span className="text-label-3 normal-case tracking-normal font-sans text-[11px]">— optional</span>
-            </span>
-            <input
-              type="url"
-              value={webhookUrl}
-              onChange={e => setWebhookUrl(e.target.value)}
-              className="w-full bg-surface border border-stroke rounded-xl px-4 py-3 font-mono text-[13px] text-label placeholder:text-label-3 focus:outline-none focus:border-yellow transition-colors"
-              placeholder="https://your-app.com/webhooks/sub"
-            />
-          </label>
+function StepBar({ step }: { step: Step }) {
+  return (
+    <div className="flex items-center gap-2 mb-6">
+      <div className="h-1 flex-1 rounded-full bg-yellow" />
+      <div className={`h-1 flex-1 rounded-full transition-colors ${step === "webhook" ? "bg-yellow" : "bg-stroke"}`} />
+    </div>
+  );
+}
 
-          <label className="block">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-label-3 block mb-1.5">
-              Webhook Secret{" "}
-              <span className="text-label-3 normal-case tracking-normal font-sans text-[11px]">— auto-generated if blank</span>
-            </span>
-            <input
-              value={webhookSecret}
-              onChange={e => setWebhookSecret(e.target.value)}
-              className="w-full bg-surface border border-stroke rounded-xl px-4 py-3 font-mono text-[13px] text-label placeholder:text-label-3 focus:outline-none focus:border-yellow transition-colors"
-              placeholder="Leave blank to auto-generate"
-            />
-          </label>
+interface AccountStepProps {
+  name: string;       setName:     (v: string) => void;
+  email: string;      setEmail:    (v: string) => void;
+  password: string;   setPassword: (v: string) => void;
+  confirm: string;    setConfirm:  (v: string) => void;
+  error: string | null;
+  onSubmit: (e: FormEvent) => void;
+}
 
-          {error && (
-            <p
-              className="font-mono text-[11px] bg-surface border border-stroke rounded-lg px-3 py-2.5"
-              style={{ color: "#F87171" }}
-            >
-              {error}
-            </p>
-          )}
+function AccountStep({ name, setName, email, setEmail, password, setPassword, confirm, setConfirm, error, onSubmit }: AccountStepProps) {
+  return (
+    <>
+      <div className="mb-7 text-center">
+        <h1 className="font-sans font-bold text-[26px] text-label mb-2">Create your account</h1>
+        <p className="font-sans text-[14px] text-label-2">Step 1 of 2, your login details</p>
+      </div>
 
+      <form onSubmit={onSubmit} className="space-y-4">
+        <FormField label="Business Name" value={name} onChange={e => setName(e.target.value)} placeholder="Acme Corp" required autoFocus />
+        <FormField label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required />
+        <FormField label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required />
+        <FormField label="Confirm Password" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repeat password" required />
+
+        {error && <ErrorBanner message={error} />}
+
+        <button
+          type="submit"
+          disabled={!name.trim() || !email.trim() || !password || !confirm}
+          className="w-full flex items-center justify-center gap-2 bg-yellow text-black font-sans text-[14px] font-semibold py-3.5 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity mt-2"
+          style={{ boxShadow: "0 8px 28px rgba(232,184,0,0.2)" }}
+        >
+          Continue <ArrowRight size={14} />
+        </button>
+      </form>
+    </>
+  );
+}
+
+interface WebhookStepProps {
+  webhookUrl: string;    setWebhookUrl:    (v: string) => void;
+  webhookSecret: string; setWebhookSecret: (v: string) => void;
+  loading: boolean;
+  error: string | null;
+  onBack: () => void;
+  onSubmit: (e: FormEvent) => void;
+}
+
+function WebhookStep({ webhookUrl, setWebhookUrl, webhookSecret, setWebhookSecret, loading, error, onBack, onSubmit }: WebhookStepProps) {
+  return (
+    <>
+      <div className="mb-7 text-center">
+        <h1 className="font-sans font-bold text-[26px] text-label mb-2">Webhook config</h1>
+        <p className="font-sans text-[14px] text-label-2">Step 2 of 2, configure later if needed</p>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-4">
+        <FormField label="Webhook URL" hint="optional" mono type="url" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://your-app.com/webhooks/sub" autoFocus />
+        <FormField label="Webhook Secret" hint="auto-generated if blank" mono value={webhookSecret} onChange={e => setWebhookSecret(e.target.value)} placeholder="Leave blank to auto-generate" />
+
+        {error && <ErrorBanner message={error} />}
+
+        <div className="flex gap-3 mt-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex-none px-5 py-3.5 border border-stroke rounded-full font-sans text-[14px] text-label-2 hover:text-label hover:border-label-2 transition-colors"
+          >
+            Back
+          </button>
           <button
             type="submit"
-            disabled={loading || !name.trim()}
-            className="w-full flex items-center justify-center gap-2 bg-yellow font-mono text-[12px] uppercase tracking-widest py-3.5 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-            style={{ color: "#000" }}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 bg-yellow text-black font-sans text-[14px] font-semibold py-3.5 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity"
+            style={{ boxShadow: "0 8px 28px rgba(232,184,0,0.2)" }}
           >
-            {loading ? (
-              <><Loader2 size={14} className="animate-spin" /> Creating account…</>
-            ) : (
-              <>Create account <ArrowRight size={14} /></>
-            )}
+            {loading ? <><Loader2 size={14} className="animate-spin" /> Creating account</> : "Create account"}
           </button>
-        </form>
-
-        <p className="mt-6 text-center font-mono text-[11px] text-label-3">
-          Already have an API key?{" "}
-          <Link href="/overview" className="text-yellow hover:opacity-80 transition-opacity">
-            Go to dashboard →
-          </Link>
-        </p>
-      </div>
-
-      <div className="mt-16 flex items-center gap-2 font-mono text-[10px] text-label-3 uppercase tracking-widest">
-        <span className="w-1.5 h-1.5 rounded-full bg-yellow inline-block" />
-        Your credentials are stored only in your browser
-      </div>
-    </main>
+        </div>
+      </form>
+    </>
   );
 }
