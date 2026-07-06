@@ -74,7 +74,7 @@ export async function createCheckoutForInvoice(tenantId: string, invoiceId: stri
   if (!customer) throw new AppError(404, 'Customer not found');
 
   const checkout = await createCheckoutOrder({
-    orderReference: invoice.id,
+    orderReference: `${invoice.id}-${Date.now()}`,
     customerEmail: customer.email,
     amount: invoice.amount,
     currency: invoice.currency,

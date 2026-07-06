@@ -7,24 +7,43 @@ import { transition, canTransition } from '../modules/subscriptions/state-machin
 import { enqueueDunning } from '../queues/dunning.queue';
 import { dispatchWebhook } from '../modules/webhooks/webhooks.dispatcher';
 
-interface NombaSignatureFields {
-  event: string;
+interface NombaWebhookPayload {
+  event_type: string;
   requestId: string;
-  merchant: { userId: string; walletId: string };
+  data: {
+    merchant: {
+      userId: string;
+      walletId: string;
+    };
+    tokenizedCardData?: {
+      tokenKey?: string;
+    };
+    transaction?: {
+      transactionId: string;
+      transactionAmount: number;
+    };
+    order?: {
+      orderReference: string;
+      customerEmail: string;
+      amount: number;
+      currency: string;
+      orderId?: string;
+    };
+  };
 }
 
 export function verifyNombaWebhookSignature(
-  payload: NombaSignatureFields,
+  payload: NombaWebhookPayload,
   signature: string,
   secret: string,
 ): boolean {
   const sigString = [
-    payload.event,
+    payload.event_type,
     payload.requestId ?? '',
-    payload.merchant?.userId ?? '',
-    payload.merchant?.walletId ?? '',
+    payload.data?.merchant?.userId ?? '',
+    payload.data?.merchant?.walletId ?? '',
   ].join(':');
-  const expected = createHmac('sha256', secret).update(sigString).digest('hex');
+  const expected = createHmac('sha256', secret).update(sigString).digest('base64');
   try {
     return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
   } catch {
@@ -32,38 +51,21 @@ export function verifyNombaWebhookSignature(
   }
 }
 
-interface NombaPaymentSuccessData {
-  orderReference: string;
-  transactionId: string;
-  amount: number;
-  currency: string;
-  tokenKey?: string;
-  customerEmail: string;
-}
+async function handlePaymentSuccess(payload: NombaWebhookPayload): Promise<void> {
+  const orderReference = payload.data.order?.orderReference;
+  const transactionId  = payload.data.transaction?.transactionId;
+  const tokenKey       = payload.data.tokenizedCardData?.tokenKey;
 
-interface NombaPaymentFailedData {
-  orderReference: string;
-  customerEmail: string;
-  amount: number;
-  reason?: string;
-}
+  if (!orderReference) {
+    console.warn('[Nomba Webhook] payment_success missing orderReference');
+    return;
+  }
 
-interface NombaWebhookPayload {
-  event: string;
-  requestId: string;
-  merchant: {
-    userId: string;
-    walletId: string;
-  };
-  data: NombaPaymentSuccessData | NombaPaymentFailedData;
-}
-
-async function handlePaymentSuccess(data: NombaPaymentSuccessData): Promise<void> {
   const invoice = await prisma.invoice.findFirst({
-    where: { nombaOrderRef: data.orderReference },
+    where: { nombaOrderRef: orderReference },
   });
   if (!invoice) {
-    console.warn(`[Nomba Webhook] invoice not found for orderReference: ${data.orderReference}`);
+    console.warn(`[Nomba Webhook] invoice not found for orderReference: ${orderReference}`);
     return;
   }
 
@@ -71,10 +73,10 @@ async function handlePaymentSuccess(data: NombaPaymentSuccessData): Promise<void
   if (invoice.status === InvoiceStatus.PAID) return;
 
   // Persist the tokenKey so future dunning and renewal charges can reuse the card
-  if (data.tokenKey) {
+  if (tokenKey && tokenKey !== 'N/A') {
     await prisma.customer.updateMany({
       where: { id: invoice.customerId, tenantId: invoice.tenantId },
-      data: { tokenisedCard: data.tokenKey },
+      data: { tokenisedCard: tokenKey },
     });
   }
 
@@ -83,7 +85,7 @@ async function handlePaymentSuccess(data: NombaPaymentSuccessData): Promise<void
     data: {
       status: InvoiceStatus.PAID,
       paidAt: new Date(),
-      nombaChargeRef: data.transactionId,
+      nombaChargeRef: transactionId,
     },
   });
 
@@ -102,17 +104,24 @@ async function handlePaymentSuccess(data: NombaPaymentSuccessData): Promise<void
 
     await dispatchWebhook(invoice.tenantId, 'subscription.activated', {
       subscription: updated,
-      invoice: { id: invoice.id, paidAt: new Date(), nombaChargeRef: data.transactionId },
+      invoice: { id: invoice.id, paidAt: new Date(), nombaChargeRef: transactionId },
     });
   }
 }
 
-async function handlePaymentFailed(data: NombaPaymentFailedData): Promise<void> {
+async function handlePaymentFailed(payload: NombaWebhookPayload): Promise<void> {
+  const orderReference = payload.data.order?.orderReference;
+
+  if (!orderReference) {
+    console.warn('[Nomba Webhook] payment_failed missing orderReference');
+    return;
+  }
+
   const invoice = await prisma.invoice.findFirst({
-    where: { nombaOrderRef: data.orderReference },
+    where: { nombaOrderRef: orderReference },
   });
   if (!invoice) {
-    console.warn(`[Nomba Webhook] invoice not found for orderReference: ${data.orderReference}`);
+    console.warn(`[Nomba Webhook] invoice not found for orderReference: ${orderReference}`);
     return;
   }
 
@@ -135,22 +144,16 @@ async function handlePaymentFailed(data: NombaPaymentFailedData): Promise<void> 
     await dispatchWebhook(invoice.tenantId, 'subscription.past_due', {
       subscriptionId: subscription.id,
       invoiceId: invoice.id,
-      reason: data.reason,
     });
   }
 
   await enqueueDunning(invoice.id, invoice.subscriptionId);
 }
 
-// Express handler: return 200 immediately, then process the event asynchronously.
-// Nomba expects a response within a few seconds or it will retry delivery.
+// Raw body required for HMAC verification — this handler is registered before express.json()
 export function nombaWebhookHandler(req: Request, res: Response): void {
-  // req.body is a raw Buffer because this route uses express.raw(), not express.json()
-  const rawBody = (req.body as Buffer).toString('utf8');
+  const rawBody  = (req.body as Buffer).toString('utf8');
   const signature = (req.headers['nomba-signature'] as string) ?? '';
-
-  console.log('[Nomba Webhook] headers:', JSON.stringify(req.headers, null, 2));
-  console.log('[Nomba Webhook] raw body:', rawBody);
 
   let payload: NombaWebhookPayload;
   try {
@@ -167,17 +170,17 @@ export function nombaWebhookHandler(req: Request, res: Response): void {
 
   res.sendStatus(200);
 
-  const { event, data } = payload;
-  console.log(`[Nomba Webhook] received: ${event}`);
+  const eventType = payload.event_type;
+  console.log(`[Nomba Webhook] received: ${eventType}`);
 
   const processor =
-    event === 'payment_success'
-      ? handlePaymentSuccess(data as NombaPaymentSuccessData)
-      : event === 'payment_failed'
-        ? handlePaymentFailed(data as NombaPaymentFailedData)
+    eventType === 'payment_success'
+      ? handlePaymentSuccess(payload)
+      : eventType === 'payment_failed'
+        ? handlePaymentFailed(payload)
         : Promise.resolve();
 
   processor.catch((err: Error) => {
-    console.error(`[Nomba Webhook] error processing ${event}:`, err.message);
+    console.error(`[Nomba Webhook] error processing ${eventType}:`, err.message);
   });
 }
