@@ -1,11 +1,11 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { Request, Response } from 'express';
-import { InvoiceStatus, SubscriptionStatus } from '@prisma/client';
+import { InvoiceStatus } from '@prisma/client';
 import { env } from '../config/env';
 import { prisma } from '../db/client';
 import { transition, canTransition } from '../modules/subscriptions/state-machine';
-import { enqueueDunning } from '../queues/dunning.queue';
 import { dispatchWebhook } from '../modules/webhooks/webhooks.dispatcher';
+import { markInvoicePaid, markInvoiceFailed } from '../modules/invoices/invoices.service';
 
 interface NombaWebhookPayload {
   event_type: string;
@@ -69,7 +69,6 @@ async function handlePaymentSuccess(payload: NombaWebhookPayload): Promise<void>
     return;
   }
 
-  // Idempotency guard: webhook may be delivered more than once
   if (invoice.status === InvoiceStatus.PAID) return;
 
   // Persist the tokenKey so future dunning and renewal charges can reuse the card
@@ -80,14 +79,8 @@ async function handlePaymentSuccess(payload: NombaWebhookPayload): Promise<void>
     });
   }
 
-  await prisma.invoice.update({
-    where: { id: invoice.id },
-    data: {
-      status: InvoiceStatus.PAID,
-      paidAt: new Date(),
-      nombaChargeRef: transactionId,
-    },
-  });
+  // Marks invoice PAID and dispatches invoice.paid webhook to tenant
+  await markInvoicePaid(invoice.tenantId, invoice.id, transactionId);
 
   const subscription = await prisma.subscription.findUnique({
     where: { id: invoice.subscriptionId },
@@ -102,7 +95,7 @@ async function handlePaymentSuccess(payload: NombaWebhookPayload): Promise<void>
       include: { plan: true, customer: true },
     });
 
-    await dispatchWebhook(invoice.tenantId, 'subscription.activated', {
+    await dispatchWebhook(invoice.tenantId, 'subscription.active', {
       subscription: updated,
       invoice: { id: invoice.id, paidAt: new Date(), nombaChargeRef: transactionId },
     });
@@ -125,34 +118,15 @@ async function handlePaymentFailed(payload: NombaWebhookPayload): Promise<void> 
     return;
   }
 
-  // Idempotency guard: webhook may be delivered more than once
   if (invoice.status === InvoiceStatus.FAILED) return;
 
-  await prisma.invoice.update({
-    where: { id: invoice.id },
-    data: { status: InvoiceStatus.FAILED },
-  });
-
-  const subscription = await prisma.subscription.findUnique({ where: { id: invoice.subscriptionId } });
-
-  if (subscription && canTransition(subscription.status, 'MARK_PAST_DUE')) {
-    await prisma.subscription.update({
-      where: { id: subscription.id },
-      data: { status: SubscriptionStatus.PAST_DUE },
-    });
-
-    await dispatchWebhook(invoice.tenantId, 'subscription.past_due', {
-      subscriptionId: subscription.id,
-      invoiceId: invoice.id,
-    });
-  }
-
-  await enqueueDunning(invoice.id, invoice.subscriptionId);
+  // Marks invoice FAILED, dispatches invoice.failed, marks subscription past_due, enqueues dunning
+  await markInvoiceFailed(invoice.tenantId, invoice.id, invoice.subscriptionId);
 }
 
 // Raw body required for HMAC verification — this handler is registered before express.json()
 export function nombaWebhookHandler(req: Request, res: Response): void {
-  const rawBody  = (req.body as Buffer).toString('utf8');
+  const rawBody   = (req.body as Buffer).toString('utf8');
   const signature = (req.headers['nomba-signature'] as string) ?? '';
 
   let payload: NombaWebhookPayload;

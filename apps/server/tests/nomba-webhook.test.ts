@@ -4,15 +4,17 @@ import { verifyNombaWebhookSignature } from '../src/nomba/nomba.webhooks';
 const SECRET = 'test-webhook-secret-xyz';
 
 const payload = {
-  event: 'payment_success',
+  event_type: 'payment_success',
   requestId: 'req-abc-123',
-  merchant: { userId: 'user-xyz', walletId: 'wallet-abc' },
-  data: { orderReference: 'inv_001' },
+  data: {
+    merchant: { userId: 'user-xyz', walletId: 'wallet-abc' },
+    order: { orderReference: 'inv_001', customerEmail: 'test@test.com', amount: 100, currency: 'NGN' },
+  },
 };
 
 function sign(p: typeof payload): string {
-  const sigString = `${p.event}:${p.requestId}:${p.merchant.userId}:${p.merchant.walletId}`;
-  return createHmac('sha256', SECRET).update(sigString).digest('hex');
+  const sigString = `${p.event_type}:${p.requestId}:${p.data.merchant.userId}:${p.data.merchant.walletId}`;
+  return createHmac('sha256', SECRET).update(sigString).digest('base64');
 }
 
 describe('verifyNombaWebhookSignature', () => {
@@ -20,8 +22,8 @@ describe('verifyNombaWebhookSignature', () => {
     expect(verifyNombaWebhookSignature(payload, sign(payload), SECRET)).toBe(true);
   });
 
-  it('rejects a tampered event field', () => {
-    const tampered = { ...payload, event: 'payment_failed' };
+  it('rejects a tampered event_type field', () => {
+    const tampered = { ...payload, event_type: 'payment_failed' };
     expect(verifyNombaWebhookSignature(tampered, sign(payload), SECRET)).toBe(false);
   });
 
