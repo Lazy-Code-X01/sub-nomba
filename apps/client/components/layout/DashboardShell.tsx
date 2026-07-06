@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
-const PUBLIC_PATHS = ["/", "/signup"];
+const PUBLIC_PATHS = ["/", "/signup", "/docs"];
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

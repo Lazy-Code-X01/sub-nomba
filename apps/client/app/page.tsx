@@ -58,6 +58,12 @@ export default function LandingPage() {
             DevCareer × Nomba 2026
           </span>
           <Link
+            href="/docs"
+            className="font-mono text-[11px] text-label-3 hover:text-label transition-colors hidden sm:inline"
+          >
+            Docs
+          </Link>
+          <Link
             href="/signup"
             className="flex items-center gap-1.5 bg-yellow text-black font-mono text-[11px] uppercase tracking-widest px-3.5 py-2 rounded-lg hover:opacity-90 transition-opacity"
           >
