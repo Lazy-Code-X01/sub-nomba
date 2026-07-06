@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import { env } from './config/env';
 import { authMiddleware } from './middleware/auth';
 import { idempotencyMiddleware } from './middleware/idempotency';
@@ -17,17 +18,17 @@ import webhooksRouter from './modules/webhooks/webhooks.routes';
 
 const app = express();
 
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'] }));
+
 // Raw body required for HMAC verification
 app.post('/nomba/webhooks', express.raw({ type: 'application/json' }), nombaWebhookHandler);
 
 app.use(express.json());
 
-// Health check (unauthenticated)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Tenant management
 app.use('/api/v1/tenants', tenantsRouter);
 
 // All routes below require tenant API key auth + idempotency support

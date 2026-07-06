@@ -41,4 +41,13 @@ router.post('/:id/checkout', async (req: Request, res: Response, next: NextFunct
   }
 });
 
+router.post('/:id/mark-paid', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const invoice = await svc.markInvoicePaid(req.tenant.id, req.params.id);
+    res.json(ok(invoice, 'Invoice marked as paid'));
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

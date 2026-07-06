@@ -1,8 +1,21 @@
-.env
+# Dependencies
 node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
 dist/
+.next/
+out/
+
+# Misc
 coverage/
 *.log
 .DS_Store
 .claude/
+
+# Prisma
 prisma/migrations/*.sql

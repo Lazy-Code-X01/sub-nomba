@@ -15,7 +15,7 @@ export function getRedis(): IORedis {
   return redisInstance;
 }
 
-// BullMQ requires a URL string — it bundles its own ioredis internally.
+// BullMQ requires a URL string - it bundles its own ioredis internally.
 export function getRedisUrl(): string {
   return env.redisUrl;
 }

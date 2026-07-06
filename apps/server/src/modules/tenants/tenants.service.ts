@@ -7,13 +7,17 @@ function generateApiKey(): string {
   return `sub_${randomBytes(24).toString('hex')}`;
 }
 
+function generateWebhookSecret(): string {
+  return randomBytes(32).toString('hex');
+}
+
 export async function createTenant(input: CreateTenantInput) {
   return prisma.tenant.create({
     data: {
       name: input.name,
       apiKey: generateApiKey(),
       webhookUrl: input.webhookUrl,
-      webhookSecret: input.webhookSecret,
+      webhookSecret: input.webhookSecret ?? generateWebhookSecret(),
     },
   });
 }
