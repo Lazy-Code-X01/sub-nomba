@@ -22,6 +22,7 @@ app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS
 
 // Raw body required for HMAC verification
 app.post('/nomba/webhooks', express.raw({ type: 'application/json' }), nombaWebhookHandler);
+app.get('/nomba/webhooks', (_req, res) => res.redirect(301, 'https://sub.symplax.app'));
 
 app.use(express.json());
 
