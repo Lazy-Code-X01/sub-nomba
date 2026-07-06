@@ -6,6 +6,7 @@ import StatCard from "@/components/ui/StatCard";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import { SkeletonTable, ErrorState } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 import PaymentLinkModal from "@/components/invoices/PaymentLinkModal";
 import { apiGet, apiPost } from "@/lib/api";
 import type { Invoice, Customer, InvoiceStatus } from "@/lib/types";
@@ -52,7 +53,7 @@ export default function InvoicesPage() {
       const result = await apiPost<Record<string, unknown>>(`/api/v1/invoices/${invId}/checkout`);
       setCheckoutResult(result);
     } catch (err) {
-      alert((err as Error).message ?? "Failed to generate payment link");
+      toast.error((err as Error).message ?? "Failed to generate payment link");
     } finally {
       setCheckoutLoading(null);
     }
@@ -64,7 +65,7 @@ export default function InvoicesPage() {
       await apiPost(`/api/v1/invoices/${invId}/mark-paid`);
       load();
     } catch (err) {
-      alert((err as Error).message ?? "Failed to mark invoice as paid");
+      toast.error((err as Error).message ?? "Failed to mark invoice as paid");
     } finally {
       setMarkingPaid(null);
     }

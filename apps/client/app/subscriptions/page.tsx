@@ -8,6 +8,7 @@ import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { SkeletonTable, ErrorState } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 import SubscriptionDetailPanel from "@/components/subscriptions/SubscriptionDetailPanel";
 import NewSubscriptionModal from "@/components/subscriptions/NewSubscriptionModal";
 import { apiGet, apiPost } from "@/lib/api";
@@ -104,7 +105,7 @@ export default function SubscriptionsPage() {
       setTab("All");
       load(undefined);
     } catch (err) {
-      alert((err as Error).message ?? "Failed to create subscription");
+      toast.error((err as Error).message ?? "Failed to create subscription");
     } finally {
       setCreating(false);
     }
@@ -117,7 +118,7 @@ export default function SubscriptionsPage() {
       load(STATUS_PARAM[tab]);
       if (selected?.id === id) setSelected(null);
     } catch (err) {
-      alert((err as Error).message ?? `Failed to ${action} subscription`);
+      toast.error((err as Error).message ?? `Failed to ${action} subscription`);
     } finally {
       setActioning(null);
     }
@@ -129,7 +130,7 @@ export default function SubscriptionsPage() {
       await apiPost(`/api/v1/subscriptions/${id}/bill-now`);
       router.push("/invoices");
     } catch (err) {
-      alert((err as Error).message ?? "Failed to generate invoice");
+      toast.error((err as Error).message ?? "Failed to generate invoice");
       setActioning(null);
     }
   }

@@ -1,15 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Copy, Check, RefreshCcw, AlertTriangle, Key, Webhook } from "lucide-react";
+import { Eye, EyeOff, Copy, Check, RefreshCcw, AlertTriangle, Key, Webhook, Pencil, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import { toast } from "@/lib/toast";
 
 interface Session {
   tenantId:      string;
   tenantName:    string;
   email:         string;
   apiKey:        string;
+  webhookUrl:    string | null;
+  webhookSecret: string | null;
+}
+
+interface Tenant {
   webhookUrl:    string | null;
   webhookSecret: string | null;
 }
@@ -38,17 +44,63 @@ function CopyButton({ value, size = 13 }: { value: string; size?: number }) {
 }
 
 export default function ApiKeysPage() {
-  const [session,      setSession]      = useState<Session | null>(null);
-  const [showKey,      setShowKey]      = useState(false);
-  const [showSecret,   setShowSecret]   = useState(false);
-  const [rotating,     setRotating]     = useState(false);
+  const [session,        setSession]        = useState<Session | null>(null);
+  const [tenant,         setTenant]         = useState<Tenant | null>(null);
+  const [showKey,        setShowKey]        = useState(false);
+  const [showSecret,     setShowSecret]     = useState(false);
+  const [rotating,       setRotating]       = useState(false);
+  const [editingWebhook, setEditingWebhook] = useState(false);
+  const [editUrl,        setEditUrl]        = useState("");
+  const [editSecret,     setEditSecret]     = useState("");
+  const [savingWebhook,  setSavingWebhook]  = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then(r => r.json())
-      .then(j => { if (j.data) setSession(j.data as Session); })
+      .then(j => {
+        if (!j.data) return;
+        setSession(j.data as Session);
+        // fetch fresh tenant data so webhook fields are always up to date
+        return fetch(`/api/proxy/api/v1/tenants/${j.data.tenantId}`)
+          .then(r => r.json())
+          .then(t => { if (t.data) setTenant(t.data as Tenant); });
+      })
       .catch(() => {});
   }, []);
+
+  function startEditWebhook() {
+    setEditUrl(webhookUrl ?? "");
+    setEditSecret("");
+    setEditingWebhook(true);
+  }
+
+  async function saveWebhook() {
+    if (!tenantId) return;
+    setSavingWebhook(true);
+    try {
+      const res  = await fetch(`/api/proxy/api/v1/tenants/${tenantId}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          webhookUrl:    editUrl.trim()    || null,
+          ...(editSecret.trim() ? { webhookSecret: editSecret.trim() } : {}),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.message ?? "Failed to update webhook"); return; }
+      setTenant(prev => ({
+        ...prev,
+        webhookUrl:    json.data.webhookUrl    ?? null,
+        webhookSecret: json.data.webhookSecret ?? null,
+      }));
+      setEditingWebhook(false);
+      toast.success("Webhook updated");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSavingWebhook(false);
+    }
+  }
 
   async function handleRotate() {
     if (!confirm("Rotate your API key? Your current key will stop working immediately.")) return;
@@ -60,16 +112,16 @@ export default function ApiKeysPage() {
       setSession(prev => prev ? { ...prev, apiKey: json.data.apiKey } : prev);
       setShowKey(true);
     } catch (err) {
-      alert((err as Error).message ?? "Failed to rotate key");
+      toast.error((err as Error).message ?? "Failed to rotate key");
     } finally {
       setRotating(false);
     }
   }
 
-  const apiKey        = session?.apiKey        ?? null;
-  const webhookUrl    = session?.webhookUrl    ?? null;
-  const webhookSecret = session?.webhookSecret ?? null;
-  const tenantId      = session?.tenantId      ?? null;
+  const apiKey        = session?.apiKey                             ?? null;
+  const webhookUrl    = tenant?.webhookUrl    ?? session?.webhookUrl    ?? null;
+  const webhookSecret = tenant?.webhookSecret ?? session?.webhookSecret ?? null;
+  const tenantId      = session?.tenantId                           ?? null;
 
   const displayKey    = apiKey
     ? (showKey    ? apiKey          : maskKey(apiKey))
@@ -107,7 +159,7 @@ app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) 
 });`;
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="space-y-5">
 
       {/* Warning */}
       <div className="flex items-start gap-3 px-4 py-3.5 bg-surface-2 border border-stroke rounded-xl">
@@ -173,7 +225,52 @@ app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) 
       <Card title="Webhook Configuration">
         <div className="space-y-5">
 
-          {webhookUrl ? (
+          {editingWebhook ? (
+            /* ---- Edit form ---- */
+            <div className="space-y-4">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-label-3 mb-2">Endpoint URL</p>
+                <input
+                  type="url"
+                  value={editUrl}
+                  onChange={e => setEditUrl(e.target.value)}
+                  placeholder="https://your-app.com/webhooks/sub"
+                  className="w-full bg-surface-2 border border-stroke rounded-xl px-3.5 py-3 font-mono text-[12px] text-label placeholder:text-label-3 focus:outline-none focus:border-yellow/40 transition-colors"
+                />
+              </div>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-label-3 mb-2">
+                  New Signing Secret <span className="text-label-3 normal-case tracking-normal font-sans">(leave blank to keep current)</span>
+                </p>
+                <input
+                  type="text"
+                  value={editSecret}
+                  onChange={e => setEditSecret(e.target.value)}
+                  placeholder="Enter new secret or leave blank"
+                  className="w-full bg-surface-2 border border-stroke rounded-xl px-3.5 py-3 font-mono text-[12px] text-label placeholder:text-label-3 focus:outline-none focus:border-yellow/40 transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-1">
+                <button
+                  onClick={saveWebhook}
+                  disabled={savingWebhook}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-yellow text-black font-sans text-[13px] font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {savingWebhook ? <><Loader2 size={12} className="animate-spin" /> Saving</> : "Save"}
+                </button>
+                <button
+                  onClick={() => setEditingWebhook(false)}
+                  disabled={savingWebhook}
+                  className="px-4 py-2.5 border border-stroke rounded-xl font-sans text-[13px] text-label-2 hover:text-label hover:border-label-2 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : webhookUrl ? (
+            /* ---- View mode (webhook exists) ---- */
             <>
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-label-3 mb-2">Endpoint URL</p>
@@ -207,15 +304,49 @@ app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) 
                   </p>
                 </div>
               )}
+
+              <div className="border-t border-stroke" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-sans text-[13px] font-medium text-label">Update Webhook</p>
+                  <p className="font-mono text-[11px] text-label-3 mt-0.5">Change your endpoint URL or signing secret.</p>
+                </div>
+                <button
+                  onClick={startEditWebhook}
+                  className="flex items-center gap-1.5 px-3.5 py-2 border border-stroke rounded-xl font-sans text-[13px] text-label-2 hover:bg-surface-2 hover:text-label transition-colors"
+                >
+                  <Pencil size={12} />
+                  Edit
+                </button>
+              </div>
             </>
           ) : (
-            <div className="py-4 text-center">
-              <p className="font-sans text-[13px] text-label-2 mb-1">No webhook configured</p>
-              <p className="font-mono text-[11px] text-label-3">
-                Add a webhook URL when creating a new account, or via{" "}
-                <span className="text-label-2">PATCH /api/v1/tenants/:id</span>.
-              </p>
-            </div>
+            /* ---- Empty state ---- */
+            <>
+              <div className="py-4 text-center">
+                <p className="font-sans text-[13px] text-label-2 mb-1">No webhook configured</p>
+                <p className="font-mono text-[11px] text-label-3">
+                  Add an endpoint URL to receive real-time subscription events.
+                </p>
+              </div>
+
+              <div className="border-t border-stroke" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-sans text-[13px] font-medium text-label">Configure Webhook</p>
+                  <p className="font-mono text-[11px] text-label-3 mt-0.5">Set up your endpoint URL and signing secret.</p>
+                </div>
+                <button
+                  onClick={startEditWebhook}
+                  className="flex items-center gap-1.5 px-3.5 py-2 border border-stroke rounded-xl font-sans text-[13px] text-label-2 hover:bg-surface-2 hover:text-label transition-colors"
+                >
+                  <Pencil size={12} />
+                  Add
+                </button>
+              </div>
+            </>
           )}
 
         </div>

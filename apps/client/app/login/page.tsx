@@ -6,19 +6,18 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FormField from "@/components/auth/FormField";
-import ErrorBanner from "@/components/auth/ErrorBanner";
+import { toast } from "@/lib/toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState<string | null>(null);
+  const [email,      setEmail]      = useState("");
+  const [password,   setPassword]   = useState("");
+  const [loading,    setLoading]    = useState(false);
+  const [shakeCount, setShakeCount] = useState(0);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       const res  = await fetch("/api/auth/login", {
         method:  "POST",
@@ -26,10 +25,15 @@ export default function LoginPage() {
         body:    JSON.stringify({ email: email.trim(), password }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message ?? "Sign in failed");
+      if (!res.ok) {
+        toast.error(json.message ?? "Invalid email or password");
+        setShakeCount(c => c + 1);
+        return;
+      }
       router.push("/overview");
-    } catch (err) {
-      setError((err as Error).message ?? "Something went wrong");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setShakeCount(c => c + 1);
     } finally {
       setLoading(false);
     }
@@ -43,10 +47,24 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <FormField label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required autoFocus />
-        <FormField label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password" required />
-
-        {error && <ErrorBanner message={error} />}
+        <FormField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="you@company.com"
+          required
+          autoFocus
+        />
+        <FormField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Your password"
+          shakeKey={shakeCount}
+          required
+        />
 
         <button
           type="submit"

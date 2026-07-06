@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import { SkeletonTable, ErrorState } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 import CustomerDetailPanel from "@/components/customers/CustomerDetailPanel";
 import { apiGet, apiPost } from "@/lib/api";
 import type { Customer, Subscription } from "@/lib/types";
@@ -52,7 +53,7 @@ export default function CustomersPage() {
       setForm({ name: "", email: "" });
       load();
     } catch (err: unknown) {
-      alert((err as Error).message ?? "Failed to create customer");
+      toast.error((err as Error).message ?? "Failed to create customer");
     } finally {
       setSaving(false);
     }

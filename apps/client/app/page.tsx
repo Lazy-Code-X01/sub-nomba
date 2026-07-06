@@ -486,7 +486,7 @@ export default function LandingPage() {
       <div className="px-5 py-8 max-w-3xl mx-auto flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Image src="/sub-logo.png" alt="Sub" width={20} height={20} className="rounded" />
-          <span className="font-mono text-[12px] text-label-3">Sub — DevCareer × Nomba 2026</span>
+          <span className="font-mono text-[12px] text-label-3">Sub · DevCareer × Nomba 2026</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="font-mono text-[11px] text-label-3">Built by Adeyemi David</span>

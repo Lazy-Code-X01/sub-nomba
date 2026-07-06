@@ -3,10 +3,10 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FormField from "@/components/auth/FormField";
-import ErrorBanner from "@/components/auth/ErrorBanner";
+import { toast } from "@/lib/toast";
 
 type Step = "account" | "webhook";
 
@@ -17,25 +17,25 @@ export default function SignupPage() {
   const [name,          setName]          = useState("");
   const [email,         setEmail]         = useState("");
   const [password,      setPassword]      = useState("");
-  const [confirm,       setConfirm]       = useState("");
   const [webhookUrl,    setWebhookUrl]    = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [shakeCount, setShakeCount] = useState(0);
 
   function handleStep1(e: FormEvent) {
     e.preventDefault();
-    setError(null);
-    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
-    if (password !== confirm) { setError("Passwords don't match"); return; }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      setShakeCount(c => c + 1);
+      return;
+    }
     setStep("webhook");
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch("/api/auth/signup", {
         method:  "POST",
@@ -49,10 +49,13 @@ export default function SignupPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message ?? "Failed to create account");
+      if (!res.ok) {
+        toast.error(json.message ?? "Failed to create account");
+        return;
+      }
       router.push("/overview");
-    } catch (err) {
-      setError((err as Error).message ?? "Something went wrong");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,8 +70,7 @@ export default function SignupPage() {
           name={name}         setName={setName}
           email={email}       setEmail={setEmail}
           password={password} setPassword={setPassword}
-          confirm={confirm}   setConfirm={setConfirm}
-          error={error}
+          shakeCount={shakeCount}
           onSubmit={handleStep1}
         />
       ) : (
@@ -76,8 +78,7 @@ export default function SignupPage() {
           webhookUrl={webhookUrl}       setWebhookUrl={setWebhookUrl}
           webhookSecret={webhookSecret} setWebhookSecret={setWebhookSecret}
           loading={loading}
-          error={error}
-          onBack={() => { setStep("account"); setError(null); }}
+          onBack={() => setStep("account")}
           onSubmit={handleSubmit}
         />
       )}
@@ -102,15 +103,14 @@ function StepBar({ step }: { step: Step }) {
 }
 
 interface AccountStepProps {
-  name: string;       setName:     (v: string) => void;
-  email: string;      setEmail:    (v: string) => void;
-  password: string;   setPassword: (v: string) => void;
-  confirm: string;    setConfirm:  (v: string) => void;
-  error: string | null;
+  name: string;     setName:     (v: string) => void;
+  email: string;    setEmail:    (v: string) => void;
+  password: string; setPassword: (v: string) => void;
+  shakeCount: number;
   onSubmit: (e: FormEvent) => void;
 }
 
-function AccountStep({ name, setName, email, setEmail, password, setPassword, confirm, setConfirm, error, onSubmit }: AccountStepProps) {
+function AccountStep({ name, setName, email, setEmail, password, setPassword, shakeCount, onSubmit }: AccountStepProps) {
   return (
     <>
       <div className="mb-7 text-center">
@@ -121,18 +121,15 @@ function AccountStep({ name, setName, email, setEmail, password, setPassword, co
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField label="Business Name" value={name} onChange={e => setName(e.target.value)} placeholder="Acme Corp" required autoFocus />
         <FormField label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required />
-        <FormField label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required />
-        <FormField label="Confirm Password" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repeat password" required />
-
-        {error && <ErrorBanner message={error} />}
+        <FormField label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" shakeKey={shakeCount} required />
 
         <button
           type="submit"
-          disabled={!name.trim() || !email.trim() || !password || !confirm}
+          disabled={!name.trim() || !email.trim() || !password}
           className="w-full flex items-center justify-center gap-2 bg-yellow text-black font-sans text-[14px] font-semibold py-3.5 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity mt-2"
           style={{ boxShadow: "0 8px 28px rgba(232,184,0,0.2)" }}
         >
-          Continue <ArrowRight size={14} />
+          Continue
         </button>
       </form>
     </>
@@ -143,12 +140,11 @@ interface WebhookStepProps {
   webhookUrl: string;    setWebhookUrl:    (v: string) => void;
   webhookSecret: string; setWebhookSecret: (v: string) => void;
   loading: boolean;
-  error: string | null;
   onBack: () => void;
   onSubmit: (e: FormEvent) => void;
 }
 
-function WebhookStep({ webhookUrl, setWebhookUrl, webhookSecret, setWebhookSecret, loading, error, onBack, onSubmit }: WebhookStepProps) {
+function WebhookStep({ webhookUrl, setWebhookUrl, webhookSecret, setWebhookSecret, loading, onBack, onSubmit }: WebhookStepProps) {
   return (
     <>
       <div className="mb-7 text-center">
@@ -159,8 +155,6 @@ function WebhookStep({ webhookUrl, setWebhookUrl, webhookSecret, setWebhookSecre
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField label="Webhook URL" hint="optional" mono type="url" value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} placeholder="https://your-app.com/webhooks/sub" autoFocus />
         <FormField label="Webhook Secret" hint="auto-generated if blank" mono value={webhookSecret} onChange={e => setWebhookSecret(e.target.value)} placeholder="Leave blank to auto-generate" />
-
-        {error && <ErrorBanner message={error} />}
 
         <div className="flex gap-3 mt-2">
           <button

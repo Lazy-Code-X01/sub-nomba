@@ -36,7 +36,8 @@ export async function signup(input: SignupInput) {
     tenantName:    tenant.name,
     email:         tenant.email,
     apiKey:        tenant.apiKey,
-    webhookSecret: tenant.webhookSecret,
+    webhookUrl:    tenant.webhookUrl    ?? null,
+    webhookSecret: tenant.webhookSecret ?? null,
   };
 }
 
@@ -55,6 +56,7 @@ export async function login(input: LoginInput) {
     tenantName:    tenant.name,
     email:         tenant.email,
     apiKey:        tenant.apiKey,
-    webhookSecret: tenant.webhookSecret,
+    webhookUrl:    tenant.webhookUrl    ?? null,
+    webhookSecret: tenant.webhookSecret ?? null,
   };
 }

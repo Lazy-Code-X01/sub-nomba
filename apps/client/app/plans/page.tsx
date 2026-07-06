@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import { SkeletonTable, ErrorState } from "@/components/ui/Skeleton";
+import { toast } from "@/lib/toast";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import type { Plan } from "@/lib/types";
 import { fmt, intervalLabel } from "@/lib/utils";
@@ -115,7 +116,7 @@ export default function PlansPage() {
       setCreateForm(emptyForm);
       load();
     } catch (err) {
-      alert((err as Error).message ?? "Failed to create plan");
+      toast.error((err as Error).message ?? "Failed to create plan");
     } finally {
       setCreating(false);
     }
@@ -144,7 +145,7 @@ export default function PlansPage() {
       setEditPlan(null);
       load();
     } catch (err) {
-      alert((err as Error).message ?? "Failed to update plan");
+      toast.error((err as Error).message ?? "Failed to update plan");
     } finally {
       setUpdating(false);
     }
@@ -157,7 +158,7 @@ export default function PlansPage() {
       await apiDelete(`/api/v1/plans/${id}`);
       load();
     } catch (err) {
-      alert((err as Error).message ?? "Failed to archive plan");
+      toast.error((err as Error).message ?? "Failed to archive plan");
     } finally {
       setArchiving(null);
     }

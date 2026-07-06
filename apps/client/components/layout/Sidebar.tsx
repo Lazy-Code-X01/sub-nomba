@@ -87,11 +87,16 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router   = useRouter();
   const [tenantName, setTenantName] = useState("My Business");
+  const [email,      setEmail]      = useState("");
+  const [expanded,   setExpanded]   = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then(r => r.json())
-      .then(j => { if (j.data?.tenantName) setTenantName(j.data.tenantName); })
+      .then(j => {
+        if (j.data?.tenantName) setTenantName(j.data.tenantName);
+        if (j.data?.email)      setEmail(j.data.email);
+      })
       .catch(() => {});
   }, []);
 
@@ -103,11 +108,11 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 w-[260px] h-full bg-surface border-r border-stroke flex flex-col z-20">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-[60px] border-b border-stroke flex-shrink-0">
-        <Image src="/sub-logo.png" alt="Sub" width={32} height={32} className="rounded-lg flex-shrink-0" />
+      <div className="flex items-center justify-start gap-0 px-4 h-[60px] border-b border-stroke flex-shrink-0">
+        <Image src="/sub-logo.png" alt="Sub" width={52} height={52} className="rounded-lg flex-shrink-0" />
         <div className="flex flex-col gap-0.5">
           <span className="font-sans font-bold text-[20px] leading-none text-label">Sub</span>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-label-3 leading-none">
+          <span className="font-mono text-[8px] uppercase tracking-widest text-label-3 leading-none">
             Powered by Nomba
           </span>
         </div>
@@ -134,23 +139,37 @@ export default function Sidebar() {
       </nav>
 
       {/* Tenant card */}
-      <div className="flex items-center gap-3 px-5 h-[64px] border-t border-stroke flex-shrink-0">
-        <Avatar name={tenantName} size="md" />
-        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-          <span className="font-sans font-semibold text-[12px] text-label leading-none truncate">
-            {tenantName}
-          </span>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-yellow leading-none">
-            Active
-          </span>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="p-1.5 rounded-lg hover:bg-surface-2 text-label-3 hover:text-label transition-colors flex-shrink-0"
-          title="Sign out"
+      <div className="px-3 py-3 border-t border-stroke flex-shrink-0 relative">
+        {/* Popup */}
+        {expanded && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setExpanded(false)} />
+            <div className="absolute bottom-full left-3 right-3 mb-2 z-20 bg-surface border border-stroke rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+              <button
+                onClick={() => { setExpanded(false); handleLogout(); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-3 text-left font-sans text-[13px] text-label-2 hover:bg-surface-2 hover:text-red transition-colors"
+              >
+                <LogOut size={13} className="flex-shrink-0" />
+                Sign out
+              </button>
+            </div>
+          </>
+        )}
+
+        <div
+          className={`flex items-center gap-2.5 px-2 py-2 rounded-xl cursor-pointer transition-colors ${expanded ? "bg-surface-2" : "hover:bg-surface-2"}`}
+          onClick={() => setExpanded(v => !v)}
         >
-          <LogOut size={14} />
-        </button>
+          <Avatar name={tenantName} size="md" />
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="font-sans font-semibold text-[12px] text-label leading-none truncate">
+              {tenantName}
+            </span>
+            <span className="font-sans text-[11px] text-label-3 leading-none mt-1 truncate">
+              {email}
+            </span>
+          </div>
+        </div>
       </div>
     </aside>
   );
