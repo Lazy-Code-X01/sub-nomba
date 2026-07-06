@@ -73,8 +73,10 @@ export async function createCheckoutForInvoice(tenantId: string, invoiceId: stri
   const customer = await prisma.customer.findUnique({ where: { id: invoice.customerId } });
   if (!customer) throw new AppError(404, 'Customer not found');
 
+  const orderReference = `${invoice.id}-${Date.now()}`;
+
   const checkout = await createCheckoutOrder({
-    orderReference: `${invoice.id}-${Date.now()}`,
+    orderReference,
     customerEmail: customer.email,
     amount: invoice.amount,
     currency: invoice.currency,
@@ -82,10 +84,10 @@ export async function createCheckoutForInvoice(tenantId: string, invoiceId: stri
     description: `Invoice ${invoice.id}`,
   });
 
-  // Store Nomba's generated orderReference so the inbound webhook can find this invoice
+  // Store the reference WE sent — Nomba echoes it back in webhook data.order.orderReference
   await prisma.invoice.update({
     where: { id: invoiceId },
-    data: { nombaOrderRef: checkout.orderReference },
+    data: { nombaOrderRef: orderReference },
   });
 
   return { checkoutLink: checkout.checkoutLink, orderReference: checkout.orderReference, invoiceId };
