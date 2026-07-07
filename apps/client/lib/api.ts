@@ -7,7 +7,7 @@ interface ApiResponse<T = unknown> {
 }
 
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "https://sub.symplax.app",
+  baseURL: "/api/proxy",
   headers: {
     "Content-Type": "application/json",
   },
