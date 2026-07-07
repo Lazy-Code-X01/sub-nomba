@@ -64,10 +64,10 @@ export default function WebhooksPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Delivered"    value={loading ? "—" : String(delivered)}      icon={<Zap size={16} />} highlight />
-        <StatCard label="Failed"       value={loading ? "—" : String(failed)}         icon={<Zap size={16} />} />
-        <StatCard label="Pending"      value={loading ? "—" : String(pending)}        icon={<Zap size={16} />} />
-        <StatCard label="Success Rate" value={loading ? "—" : `${successRate}%`}      icon={<Zap size={16} />} />
+        <StatCard label="Delivered"    value={loading ? "-" : String(delivered)}      icon={<Zap size={16} />} highlight />
+        <StatCard label="Failed"       value={loading ? "-" : String(failed)}         icon={<Zap size={16} />} />
+        <StatCard label="Pending"      value={loading ? "-" : String(pending)}        icon={<Zap size={16} />} />
+        <StatCard label="Success Rate" value={loading ? "-" : `${successRate}%`}      icon={<Zap size={16} />} />
       </div>
 
       <Card title="Webhook Log" noPadding>

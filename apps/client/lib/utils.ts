@@ -9,14 +9,14 @@ export function fmt(n: number): string {
 }
 
 export function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-NG", {
     day: "numeric", month: "short", year: "numeric",
   });
 }
 
 export function fmtDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("en-NG", {
     day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",

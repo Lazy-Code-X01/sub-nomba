@@ -41,7 +41,7 @@ export default function CustomerDetailPanel({ customer, subscription: sub, onClo
           <div className="bg-surface-2 border border-stroke rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-sans text-[12px] text-label-2">Plan</span>
-              <span className="font-sans text-[13px] font-medium text-label">{sub?.plan.name ?? "—"}</span>
+              <span className="font-sans text-[13px] font-medium text-label">{sub?.plan.name ?? "-"}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="font-sans text-[12px] text-label-2">Status</span>
@@ -50,7 +50,7 @@ export default function CustomerDetailPanel({ customer, subscription: sub, onClo
             <div className="flex items-center justify-between">
               <span className="font-sans text-[12px] text-label-2">MRR</span>
               <span className="font-mono text-[13px] font-medium text-yellow">
-                {mrr > 0 ? fmt(mrr) : "—"}
+                {mrr > 0 ? fmt(mrr) : "-"}
               </span>
             </div>
             <div className="flex items-center justify-between">

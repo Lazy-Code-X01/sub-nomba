@@ -31,7 +31,7 @@ const COLS    = "grid-cols-[2fr_1.5fr_1fr_1.5fr_1.5fr_1fr_88px]";
 const HEADERS = ["Customer", "Plan", "Status", "Current Period", "Next Billing", "Amount", "Actions"];
 
 function nextBilling(sub: Subscription): string {
-  if (sub.status === "CANCELLED") return "—";
+  if (sub.status === "CANCELLED") return "-";
   if (sub.status === "PAUSED")    return "On resume";
   if (sub.status === "PAST_DUE")  return "Retrying";
   return fmtDate(sub.currentPeriodEnd);
@@ -163,11 +163,11 @@ export default function SubscriptionsPage() {
       </div>
 
       <div className="grid grid-cols-5 gap-4">
-        <StatCard label="Active"    value={loading ? "—" : String(counts.active)}    icon={<RefreshCcw size={16} />} highlight />
-        <StatCard label="Trialing"  value={loading ? "—" : String(counts.trialing)}  icon={<Clock size={16} />} />
-        <StatCard label="Past Due"  value={loading ? "—" : String(counts.pastDue)}   icon={<XCircle size={16} />} />
-        <StatCard label="Paused"    value={loading ? "—" : String(counts.paused)}    icon={<PauseCircle size={16} />} />
-        <StatCard label="Cancelled" value={loading ? "—" : String(counts.cancelled)} icon={<XCircle size={16} />} />
+        <StatCard label="Active"    value={loading ? "-" : String(counts.active)}    icon={<RefreshCcw size={16} />} highlight />
+        <StatCard label="Trialing"  value={loading ? "-" : String(counts.trialing)}  icon={<Clock size={16} />} />
+        <StatCard label="Past Due"  value={loading ? "-" : String(counts.pastDue)}   icon={<XCircle size={16} />} />
+        <StatCard label="Paused"    value={loading ? "-" : String(counts.paused)}    icon={<PauseCircle size={16} />} />
+        <StatCard label="Cancelled" value={loading ? "-" : String(counts.cancelled)} icon={<XCircle size={16} />} />
       </div>
 
       <Card title="Subscriptions" noPadding>

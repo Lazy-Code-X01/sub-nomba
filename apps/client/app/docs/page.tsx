@@ -82,7 +82,7 @@ function EndpointCard({ ep }: { ep: Endpoint }) {
 function SectionLabel({ n, tag, title }: { n: string; tag: string; title: string }) {
   return (
     <div className="mb-8">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-yellow mb-2">{n} — {tag}</p>
+      <p className="font-mono text-[10px] uppercase tracking-widest text-yellow mb-2">{n}: {tag}</p>
       <h2 className="font-sans font-bold text-[24px] text-label">{title}</h2>
     </div>
   );
@@ -101,7 +101,7 @@ function ResourceGroup({ id, title, endpoints }: { id: string; title: string; en
   );
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+//Data
 
 const PLANS: Endpoint[] = [
   {
@@ -115,11 +115,11 @@ const PLANS: Endpoint[] = [
     desc: "Create a new billing plan.",
     body: `{
   "name":          "Pro Monthly",  // required
-  "amount":        5000,           // required  — smallest unit (kobo for NGN)
-  "currency":      "NGN",         // optional  — default "NGN"
-  "interval":      "MONTHLY",     // required  — MONTHLY | ANNUAL | DAILY
-  "intervalCount": 1,             // optional  — default 1
-  "trialDays":     7              // optional  — default 0 (no free trial)
+  "amount":        5000,           // required  - smallest unit (kobo for NGN)
+  "currency":      "NGN",         // optional  - default "NGN"
+  "interval":      "MONTHLY",     // required  - MONTHLY | ANNUAL | DAILY
+  "intervalCount": 1,             // optional  - default 1
+  "trialDays":     7              // optional  - default 0 (no free trial)
 }`,
   },
   {
@@ -129,7 +129,7 @@ const PLANS: Endpoint[] = [
     body: `{
   "name":     "Pro Monthly v2",  // optional
   "amount":   6000,              // optional
-  "isActive": false              // optional — soft-deactivate
+  "isActive": false              // optional - soft-deactivate
 }`,
   },
   {
@@ -170,9 +170,9 @@ const SUBSCRIPTIONS: Endpoint[] = [
     path: "/api/v1/subscriptions",
     desc: "Create a subscription linking a customer to a plan. Status starts as TRIALING if the plan has trialDays > 0, otherwise CREATED. Call /bill-now after creation to generate the first invoice.",
     body: `{
-  "customerId": "3e91506d-abc7-41a2-ac33-acfe74534820",  // required — UUID
-  "planId":     "a4d64215-73e0-462f-b640-48f4e9f1c4b0",  // required — UUID
-  "startDate":  "2026-08-01T00:00:00Z"                   // optional — defaults to now
+  "customerId": "3e91506d-abc7-41a2-ac33-acfe74534820",  // required - UUID
+  "planId":     "a4d64215-73e0-462f-b640-48f4e9f1c4b0",  // required - UUID
+  "startDate":  "2026-08-01T00:00:00Z"                   // optional - defaults to now
 }`,
   },
   {
@@ -194,14 +194,14 @@ const SUBSCRIPTIONS: Endpoint[] = [
   {
     method: "POST",
     path: "/api/v1/subscriptions/:id/cancel",
-    desc: "Cancel a subscription. This is irreversible — use pause if you may need to resume.",
+    desc: "Cancel a subscription. This is irreversible - use pause if you may need to resume.",
   },
   {
     method: "POST",
     path: "/api/v1/subscriptions/:id/change-plan",
     desc: "Upgrade or downgrade to a different plan on an ACTIVE subscription. Proration is calculated automatically.",
     body: `{
-  "newPlanId": "b8f72c1d-9e4a-4b3f-a1d2-0c5e8f9a3b7c"  // required — UUID
+  "newPlanId": "b8f72c1d-9e4a-4b3f-a1d2-0c5e8f9a3b7c"  // required - UUID
 }`,
   },
 ];
@@ -216,7 +216,7 @@ const INVOICES: Endpoint[] = [
   {
     method: "POST",
     path: "/api/v1/invoices/:id/checkout",
-    desc: "Generate a Nomba checkout link for a PENDING invoice. Returns checkoutLink, orderReference, and invoiceId. Redirect your user to checkoutLink — Sub handles the rest automatically.",
+    desc: "Generate a Nomba checkout link for a PENDING invoice. Returns checkoutLink, orderReference, and invoiceId. Redirect your user to checkoutLink - Sub handles the rest automatically.",
   },
   {
     method: "POST",
@@ -229,7 +229,7 @@ const WEBHOOK_EVENTS_ENDPOINT: Endpoint[] = [
   {
     method: "GET",
     path: "/api/v1/webhook-events",
-    desc: "List all outbound webhook delivery attempts — event type, status (PENDING | DELIVERED | FAILED), attempt count, and full payload.",
+    desc: "List all outbound webhook delivery attempts - event type, status (PENDING | DELIVERED | FAILED), attempt count, and full payload.",
   },
 ];
 
@@ -237,7 +237,7 @@ const EVENTS = [
   { event: "subscription.created",   when: "A new subscription is created.",                                   trigger: "POST /subscriptions" },
   { event: "subscription.active",    when: "Subscription transitions to ACTIVE after a successful payment.",    trigger: "Nomba payment_success" },
   { event: "subscription.cancelled", when: "Subscription is cancelled.",                                        trigger: "POST /cancel" },
-  { event: "subscription.past_due",  when: "A renewal charge failed — subscription moved to PAST_DUE.",         trigger: "Nomba payment_failed" },
+  { event: "subscription.past_due",  when: "A renewal charge failed - subscription moved to PAST_DUE.",         trigger: "Nomba payment_failed" },
   { event: "invoice.created",        when: "A new invoice is generated.",                                       trigger: "POST /bill-now" },
   { event: "invoice.paid",           when: "Invoice marked PAID after a successful Nomba payment.",             trigger: "Nomba payment_success" },
   { event: "invoice.failed",         when: "Invoice marked FAILED after a Nomba payment failure.",              trigger: "Nomba payment_failed" },
@@ -265,7 +265,7 @@ curl -X POST ${BASE}/api/v1/subscriptions \\
 curl -X POST ${BASE}/api/v1/subscriptions/<sub-id>/bill-now \\
   -H "x-api-key: YOUR_KEY"
 
-# 5. Get Nomba checkout link — redirect your user here
+# 5. Get Nomba checkout link - redirect your user here
 curl -X POST ${BASE}/api/v1/invoices/<invoice-id>/checkout \\
   -H "x-api-key: YOUR_KEY"
 # → { "data": { "checkoutLink": "https://checkout.nomba.com/..." } }`;
@@ -290,7 +290,7 @@ function verifySubWebhook(
   }
 }
 
-// Express — register BEFORE express.json()
+// Express - register BEFORE express.json()
 app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) => {
   const sig = req.headers['x-sub-signature'] as string ?? '';
 
@@ -312,10 +312,10 @@ app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) 
       break;
   }
 
-  res.sendStatus(200); // always 200 — Sub retries on non-2xx
+  res.sendStatus(200); // always 200 - Sub retries on non-2xx
 });`;
 
-// ─── Sidebar nav data ──────────────────────────────────────────────────────────
+//Sidebar nav data
 
 const NAV = [
   { label: "Quick Start",     href: "#quick-start" },
@@ -335,7 +335,7 @@ const NAV = [
   { label: "Responses",       href: "#responses" },
 ];
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+//Page
 
 export default function DocsPage() {
   return (
@@ -362,7 +362,7 @@ export default function DocsPage() {
         </div>
       </nav>
 
-      {/* Body — sidebar + content */}
+      {/* Body - sidebar + content */}
       <div className="max-w-6xl mx-auto px-6 pt-28 flex gap-0">
 
         {/* Sticky sidebar */}
@@ -438,7 +438,7 @@ export default function DocsPage() {
             <SectionLabel n="02" tag="Authentication" title="API key" />
             <p className="font-sans text-[13px] text-label-2 mb-5 leading-relaxed">
               Pass your tenant API key in the <Mono>x-api-key</Mono> header on every request.
-              Keys are scoped per tenant — data is fully isolated. Find yours in{" "}
+              Keys are scoped per tenant - data is fully isolated. Find yours in{" "}
               <Link href="/api-keys" className="text-yellow hover:underline">API Keys</Link>.
             </p>
             <pre className="bg-surface border border-stroke rounded-xl px-5 py-4 font-mono text-[11px] leading-[1.8] text-label-2 overflow-x-auto whitespace-pre">
@@ -494,7 +494,7 @@ export default function DocsPage() {
               using your tenant webhook secret. The hex-encoded signature is in <Mono>X-Sub-Signature</Mono>.
             </p>
             <p className="font-sans text-[13px] text-label-2 mb-5 leading-relaxed">
-              Always use the <strong className="text-label font-semibold">raw body</strong> — not the parsed JSON object — when verifying.
+              Always use the <strong className="text-label font-semibold">raw body</strong> - not the parsed JSON object - when verifying.
             </p>
             <pre className="bg-surface border border-stroke rounded-xl px-5 py-5 font-mono text-[11px] leading-[1.8] text-label-2 overflow-x-auto whitespace-pre">
               {VERIFY_SNIPPET}
@@ -505,23 +505,23 @@ export default function DocsPage() {
           <section id="responses" className="mb-14 scroll-mt-20">
             <SectionLabel n="06" tag="Responses" title="Response format" />
             <p className="font-sans text-[13px] text-label-2 mb-5">
-              All endpoints return the same JSON envelope — check <Mono>success</Mono> first, then read <Mono>data</Mono>.
+              All endpoints return the same JSON envelope - check <Mono>success</Mono> first, then read <Mono>data</Mono>.
             </p>
-            <pre className="bg-surface border border-stroke rounded-xl px-5 py-5 font-mono text-[11px] leading-[1.8] text-label-2 overflow-x-auto whitespace-pre">{`// 2xx — success
+            <pre className="bg-surface border border-stroke rounded-xl px-5 py-5 font-mono text-[11px] leading-[1.8] text-label-2 overflow-x-auto whitespace-pre">{`// 2xx - success
 {
   "success": true,
   "message": "Plan created",
   "data":    { ... }
 }
 
-// 4xx / 5xx — error
+// 4xx / 5xx - error
 {
   "success": false,
   "message": "Plan not found",
   "data":    null
 }
 
-// 400 — validation failure
+// 400 - validation failure
 {
   "success": false,
   "message": "Validation error",
@@ -538,7 +538,7 @@ export default function DocsPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image src="/sub-logo.png" alt="Sub" width={20} height={20} className="rounded" />
-            <span className="font-mono text-[12px] text-label-3">Sub — DevCareer × Nomba 2026</span>
+            <span className="font-mono text-[12px] text-label-3">Sub · DevCareer × Nomba 2026</span>
           </div>
           <Link href="/" className="font-mono text-[11px] text-label-3 hover:text-label transition-colors flex items-center gap-1.5">
             Back to home <ArrowUpRight size={11} />

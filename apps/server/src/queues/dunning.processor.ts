@@ -44,7 +44,7 @@ async function processDunningJob(job: Job<DunningJobData>): Promise<void> {
     const token = subscription.customer.tokenisedCard;
     const isValidToken = Boolean(token && token.trim() !== '' && token !== 'N/A');
     if (!isValidToken) {
-      console.log(`[Billing] subscription ${subscriptionId} has no valid tokenised card — skipping charge`);
+      console.log(`[Billing] subscription ${subscriptionId} has no valid tokenised card - skipping charge`);
       throw new Error('No valid tokenised card on file');
     }
 

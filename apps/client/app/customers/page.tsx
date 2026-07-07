@@ -71,7 +71,7 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="font-mono text-[11px] text-label-3 uppercase tracking-widest">
-          {loading ? "—" : `${total} customers total`}
+          {loading ? "-" : `${total} customers total`}
         </p>
         <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
           <Plus size={12} /> Add Customer
@@ -79,10 +79,10 @@ export default function CustomersPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Total Customers" value={loading ? "—" : String(total)}       icon={<Users size={16} />} highlight />
-        <StatCard label="Active"          value={loading ? "—" : String(activeCount)} icon={<UserCheck size={16} />} />
-        <StatCard label="Churned"         value={loading ? "—" : String(churned)}     icon={<UserX size={16} />} />
-        <StatCard label="New This Month"  value={loading ? "—" : String(newMonth)}    icon={<TrendingDown size={16} />} />
+        <StatCard label="Total Customers" value={loading ? "-" : String(total)}       icon={<Users size={16} />} highlight />
+        <StatCard label="Active"          value={loading ? "-" : String(activeCount)} icon={<UserCheck size={16} />} />
+        <StatCard label="Churned"         value={loading ? "-" : String(churned)}     icon={<UserX size={16} />} />
+        <StatCard label="New This Month"  value={loading ? "-" : String(newMonth)}    icon={<TrendingDown size={16} />} />
       </div>
 
       <Card title="All Customers" noPadding>
@@ -124,10 +124,10 @@ export default function CustomersPage() {
                   <span className="font-mono text-[12px] text-label-2 truncate">{c.email}</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="font-sans text-[13px] text-label-2 truncate">{sub?.plan.name ?? "—"}</span>
+                  <span className="font-sans text-[13px] text-label-2 truncate">{sub?.plan.name ?? "-"}</span>
                 </div>
                 <div className="flex items-center">
-                  {sub ? <Badge variant={subStatusBadge(sub.status)} /> : <span className="font-mono text-[10px] text-label-3">—</span>}
+                  {sub ? <Badge variant={subStatusBadge(sub.status)} /> : <span className="font-mono text-[10px] text-label-3">-</span>}
                 </div>
                 <div className="flex items-center">
                   <span className="font-mono text-[12px] text-label-2">{fmtDate(c.createdAt)}</span>

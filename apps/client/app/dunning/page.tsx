@@ -57,9 +57,9 @@ export default function DunningPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Total at Risk"   value={loading ? "—" : fmt(totalAtRisk)}           icon={<AlertTriangle size={16} />} highlight />
-        <StatCard label="Active Dunning"  value={loading ? "—" : String(failedInvoices.length)} icon={<RefreshCcw size={16} />} />
-        <StatCard label="Paid Invoices"   value={loading ? "—" : String(recovered)}           icon={<TrendingUp size={16} />} />
+        <StatCard label="Total at Risk"   value={loading ? "-" : fmt(totalAtRisk)}           icon={<AlertTriangle size={16} />} highlight />
+        <StatCard label="Active Dunning"  value={loading ? "-" : String(failedInvoices.length)} icon={<RefreshCcw size={16} />} />
+        <StatCard label="Paid Invoices"   value={loading ? "-" : String(recovered)}           icon={<TrendingUp size={16} />} />
       </div>
 
       <Card title="Dunning Queue" noPadding>

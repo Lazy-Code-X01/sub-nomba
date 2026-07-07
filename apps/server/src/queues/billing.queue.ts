@@ -54,7 +54,7 @@ async function processBillingJob(job: Job<BillingJobData>): Promise<void> {
     const token = sub.customer.tokenisedCard;
     const isValidToken = Boolean(token && token.trim() !== '' && token !== 'N/A');
     if (!isValidToken) {
-      console.log(`[Billing] subscription ${subscriptionId} has no valid tokenised card — skipping charge`);
+      console.log(`[Billing] subscription ${subscriptionId} has no valid tokenised card - skipping charge`);
       throw new Error('No valid tokenised card');
     }
 

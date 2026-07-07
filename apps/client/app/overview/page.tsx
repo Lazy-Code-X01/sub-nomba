@@ -114,7 +114,7 @@ export default function OverviewPage() {
             const customer  = customerMap.get(inv.customerId);
             const sub       = subscriptionMap.get(inv.subscriptionId);
             const name      = customer?.name ?? "Unknown";
-            const planName  = sub?.plan.name ?? "—";
+            const planName  = sub?.plan.name ?? "-";
             const isNeg     = inv.status === "FAILED";
             return (
               <div

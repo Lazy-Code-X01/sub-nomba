@@ -179,7 +179,7 @@ export default function PlansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="font-mono text-[11px] text-label-3 uppercase tracking-widest">
-          {loading ? "—" : `${plans.length} plans total`}
+          {loading ? "-" : `${plans.length} plans total`}
         </p>
         <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>
           <Plus size={12} /> New Plan
@@ -187,10 +187,10 @@ export default function PlansPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Total Plans"    value={loading ? "—" : String(plans.length)} icon={<Layers size={16} />} />
-        <StatCard label="Active Plans"   value={loading ? "—" : String(activePlans)}  icon={<TrendingUp size={16} />} />
-        <StatCard label="Avg Plan Value" value={loading ? "—" : fmt(avgValue)}         icon={<Star size={16} />} />
-        <StatCard label="Plans Online"   value={loading ? "—" : String(activePlans)}   icon={<Users size={16} />} highlight />
+        <StatCard label="Total Plans"    value={loading ? "-" : String(plans.length)} icon={<Layers size={16} />} />
+        <StatCard label="Active Plans"   value={loading ? "-" : String(activePlans)}  icon={<TrendingUp size={16} />} />
+        <StatCard label="Avg Plan Value" value={loading ? "-" : fmt(avgValue)}         icon={<Star size={16} />} />
+        <StatCard label="Plans Online"   value={loading ? "-" : String(activePlans)}   icon={<Users size={16} />} highlight />
       </div>
 
       <Card title="All Plans" noPadding>
@@ -225,7 +225,7 @@ export default function PlansPage() {
               </div>
               <div className="flex items-center">
                 <span className="font-mono text-[11px] text-label-2">
-                  {plan.trialDays > 0 ? `${plan.trialDays}d` : "—"}
+                  {plan.trialDays > 0 ? `${plan.trialDays}d` : "-"}
                 </span>
               </div>
               <div className="flex items-center">

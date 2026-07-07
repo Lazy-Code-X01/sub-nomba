@@ -84,7 +84,7 @@ export async function createCheckoutForInvoice(tenantId: string, invoiceId: stri
     description: `Invoice ${invoice.id}`,
   });
 
-  // Store the reference WE sent — Nomba echoes it back in webhook data.order.orderReference
+  // Store the reference WE sent - Nomba echoes it back in webhook data.order.orderReference
   await prisma.invoice.update({
     where: { id: invoiceId },
     data: { nombaOrderRef: orderReference },

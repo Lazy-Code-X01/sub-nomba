@@ -99,10 +99,10 @@ export default function InvoicesPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Total Collected" value={loading ? "—" : fmt(paidAmt)}          icon={<FileText size={16} />} highlight />
-        <StatCard label="Paid"            value={loading ? "—" : String(paid.length)}   icon={<FileText size={16} />} />
-        <StatCard label="Failed"          value={loading ? "—" : String(failed)}        icon={<FileText size={16} />} />
-        <StatCard label="Pending"         value={loading ? "—" : String(pending)}       icon={<FileText size={16} />} />
+        <StatCard label="Total Collected" value={loading ? "-" : fmt(paidAmt)}          icon={<FileText size={16} />} highlight />
+        <StatCard label="Paid"            value={loading ? "-" : String(paid.length)}   icon={<FileText size={16} />} />
+        <StatCard label="Failed"          value={loading ? "-" : String(failed)}        icon={<FileText size={16} />} />
+        <StatCard label="Pending"         value={loading ? "-" : String(pending)}       icon={<FileText size={16} />} />
       </div>
 
       <Card title="Invoices" noPadding>
@@ -153,7 +153,7 @@ export default function InvoicesPage() {
                     <span className="font-mono text-[12px] text-label-2">{fmtDate(inv.paidAt)}</span>
                   </div>
                   <div className="flex items-center min-w-0 overflow-hidden">
-                    <span className="font-mono text-[11px] text-label-3 truncate">{ref ?? "—"}</span>
+                    <span className="font-mono text-[11px] text-label-3 truncate">{ref ?? "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button onClick={() => setViewingInvoice(inv)} className="p-1.5 rounded-lg hover:bg-surface-3 text-label-3 hover:text-label transition-colors" title="View">
@@ -208,7 +208,7 @@ export default function InvoicesPage() {
                 ["Status",       inv.status],
                 ["Due Date",     fmtDate(inv.dueDate)],
                 ["Paid At",      fmtDate(inv.paidAt)],
-                ["Nomba Ref",    ref ?? "—"],
+                ["Nomba Ref",    ref ?? "-"],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-start justify-between gap-4">
                   <span className="font-mono text-[11px] text-label-3 flex-shrink-0">{label}</span>

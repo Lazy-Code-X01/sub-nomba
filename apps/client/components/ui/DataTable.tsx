@@ -26,7 +26,7 @@ export default function DataTable<T extends { id?: string }>({
       return col.accessor(row);
     }
     const value = row[col.accessor];
-    return value !== undefined && value !== null ? String(value) : "—";
+    return value !== undefined && value !== null ? String(value) : "-";
   }
 
   return (

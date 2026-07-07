@@ -80,7 +80,7 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-canvas font-sans antialiased">
 
-      {/* ── Floating pill nav ──────────────────────────────────────────────── */}
+      {/* Floating pill nav*/}
       <nav className="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-4rem)] max-w-3xl">
         <div className="flex items-center justify-between bg-canvas/85 backdrop-blur-md border border-stroke rounded-full px-5 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-0">
@@ -110,7 +110,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
+      {/* Hero*/}
       <section id="hero" className="relative flex flex-col items-center justify-center text-center min-h-screen pt-32 px-6 overflow-hidden">
         {/* Radial glow */}
         <div
@@ -159,10 +159,10 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* ── Hero card stack ──────────────────────────────────────────────── */}
-        <div className="fade-up-5 relative w-full max-w-4xl h-80">
-          {/* Left — customer */}
-          <div className="absolute left-[2%] top-10 w-56 sm:w-64 -rotate-6 scale-90 hover:-rotate-3 hover:scale-[0.93] hover:-translate-y-2 transition-all duration-300 cursor-default">
+        {/* Hero card stack*/}
+        <div className="fade-up-5 w-full max-w-sm sm:max-w-4xl mx-auto sm:relative sm:h-80">
+          {/* Left - customer (hidden on mobile) */}
+          <div className="hidden sm:block sm:absolute left-[2%] top-10 w-64 -rotate-6 scale-90 hover:-rotate-3 hover:scale-[0.93] hover:-translate-y-2 transition-all duration-300 cursor-default">
             <div className="bg-surface border border-stroke rounded-3xl p-6 shadow-[0_24px_48px_rgba(0,0,0,0.5)]">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-surface-3 flex items-center justify-center flex-shrink-0">
@@ -179,8 +179,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Center — subscription */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 w-72 sm:w-80 z-20 hover:-translate-y-3 transition-transform duration-300 cursor-default">
+          {/* Center - subscription */}
+          <div className="mx-auto sm:mx-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2 sm:top-0 w-72 sm:w-80 z-20 hover:-translate-y-3 transition-transform duration-300 cursor-default">
             <div
               className="bg-surface-2 border border-stroke rounded-3xl p-7"
               style={{ boxShadow: "0 32px 64px rgba(0,0,0,0.6), 0 0 80px rgba(232,184,0,0.07)" }}
@@ -199,8 +199,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right — invoice */}
-          <div className="absolute right-[2%] top-10 w-56 sm:w-64 rotate-6 scale-90 hover:rotate-3 hover:scale-[0.93] hover:-translate-y-2 transition-all duration-300 cursor-default">
+          {/* Right - invoice (hidden on mobile) */}
+          <div className="hidden sm:block sm:absolute right-[2%] top-10 w-64 rotate-6 scale-90 hover:rotate-3 hover:scale-[0.93] hover:-translate-y-2 transition-all duration-300 cursor-default">
             <div className="bg-surface border border-stroke rounded-3xl p-6 shadow-[0_24px_48px_rgba(0,0,0,0.5)]">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-mono text-[11px] uppercase tracking-widest text-label-3">Invoice</span>
@@ -217,8 +217,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────────────────────────── */}
-      <section id="how-it-works" className="px-8 py-28 max-w-3xl mx-auto">
+      {/* How it works*/}
+      <section id="how-it-works" className="px-4 sm:px-8 py-16 sm:py-28 max-w-3xl mx-auto">
         <div className="text-center mb-14">
           <h2 className="font-sans font-black text-[34px] tracking-tight text-label">From zero to billing in minutes</h2>
         </div>
@@ -235,8 +235,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features bento ───────────────────────────────────────────────────── */}
-      <section id="features" className="border-t border-stroke px-8 py-24">
+      {/* Features bento*/}
+      <section id="features" className="border-t border-stroke px-4 sm:px-8 py-16 sm:py-24">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-14">
             <p className="font-mono text-[10px] uppercase tracking-widest text-yellow mb-3">Features</p>
@@ -245,7 +245,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-6 gap-4">
 
-            {/* Card 1 — Lifecycle (3 cols) */}
+            {/* Card 1 - Lifecycle (3 cols) */}
             <div className="col-span-6 md:col-span-3 bg-surface border border-stroke rounded-[1.75rem] p-6 hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] transition-shadow duration-300">
               <GitBranch size={20} className="text-yellow mb-4" />
               <h3 className="font-sans font-bold text-[16px] text-label mb-1.5">Lifecycle management</h3>
@@ -272,7 +272,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Card 2 — Nomba STAR (3 cols) */}
+            {/* Card 2 - Nomba STAR (3 cols) */}
             <div className="col-span-6 md:col-span-3 relative bg-canvas border border-stroke rounded-[1.75rem] p-6 overflow-hidden hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-shadow duration-300">
               <div
                 aria-hidden
@@ -300,7 +300,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Card 3 — Webhooks (4 cols) */}
+            {/* Card 3 - Webhooks (4 cols) */}
             <div className="col-span-6 md:col-span-4 bg-surface border border-stroke rounded-[1.75rem] p-6 hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] transition-shadow duration-300">
               <Bell size={20} className="text-yellow mb-4" />
               <h3 className="font-sans font-bold text-[16px] text-label mb-1.5">Signed webhook events</h3>
@@ -335,7 +335,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Card 4 — Dunning (2 cols) */}
+            {/* Card 4 - Dunning (2 cols) */}
             <div className="col-span-6 md:col-span-2 bg-surface border border-stroke rounded-[1.75rem] p-6 hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] transition-shadow duration-300">
               <RefreshCcw size={20} className="text-yellow mb-4" />
               <h3 className="font-sans font-bold text-[16px] text-label mb-1.5">Smart dunning</h3>
@@ -373,9 +373,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── API preview ──────────────────────────────────────────────────────── */}
-      <section id="api" className="border-t border-stroke px-8 py-24 bg-surface">
-        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      {/* API preview*/}
+      <section id="api" className="border-t border-stroke px-4 sm:px-8 py-16 sm:py-24 bg-surface">
+        <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-widest text-yellow mb-4">Developer first</p>
             <h2 className="font-sans font-black text-[30px] tracking-tight text-label mb-4">
@@ -425,8 +425,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Metrics ──────────────────────────────────────────────────────────── */}
-      <section className="px-8 py-24 max-w-6xl mx-auto">
+      {/* Metrics*/}
+      <section className="px-4 sm:px-8 py-16 sm:py-24 max-w-6xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {METRICS.map((m, i) => (
             <div key={i}>
@@ -437,10 +437,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer CTA — MetaPulse-style rounded-top panel ───────────────────── */}
+      {/* Footer CTA - MetaPulse-style rounded-top panel*/}
       <div className="px-5 pb-0">
         <div className="max-w-6xl mx-auto">
-          <div className="relative bg-surface border border-stroke rounded-t-[2.5rem] px-8 pt-20 pb-10 overflow-hidden">
+          <div className="relative bg-surface border border-stroke rounded-t-[2.5rem] px-4 sm:px-8 pt-12 sm:pt-20 pb-10 overflow-hidden">
             {/* Yellow line at very top center */}
             <div
               aria-hidden
@@ -454,7 +454,7 @@ export default function LandingPage() {
               style={{ background: "radial-gradient(ellipse at top, rgba(232,184,0,0.09) 0%, transparent 70%)" }}
             />
 
-            <div className="relative text-center mb-16">
+            <div className="relative text-center mb-10 sm:mb-16">
               <h2 className="font-sans font-black text-[48px] sm:text-[66px] leading-[0.93] tracking-tight text-label mb-5">
                 Ready to ship<br />billing?
               </h2>
@@ -482,7 +482,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
+      {/* Footer*/}
       <div className="px-5 py-8 max-w-3xl mx-auto flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Image src="/sub-logo.png" alt="Sub" width={20} height={20} className="rounded" />

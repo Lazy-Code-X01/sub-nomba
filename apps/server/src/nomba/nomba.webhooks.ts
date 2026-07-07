@@ -124,7 +124,7 @@ async function handlePaymentFailed(payload: NombaWebhookPayload): Promise<void> 
   await markInvoiceFailed(invoice.tenantId, invoice.id, invoice.subscriptionId);
 }
 
-// Raw body required for HMAC verification — this handler is registered before express.json()
+// Raw body required for HMAC verification - this handler is registered before express.json()
 export function nombaWebhookHandler(req: Request, res: Response): void {
   const rawBody   = (req.body as Buffer).toString('utf8');
   const signature = (req.headers['nomba-signature'] as string) ?? '';
@@ -139,7 +139,7 @@ export function nombaWebhookHandler(req: Request, res: Response): void {
   }
 
   if (signature && !verifyNombaWebhookSignature(payload, signature, env.nomba.webhookSecret)) {
-    console.warn('[Nomba Webhook] signature mismatch — processing anyway (fix NOMBA_WEBHOOK_SECRET)');
+    console.warn('[Nomba Webhook] signature mismatch - processing anyway (fix NOMBA_WEBHOOK_SECRET)');
   }
 
   res.sendStatus(200);
