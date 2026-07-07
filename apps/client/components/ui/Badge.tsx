@@ -75,10 +75,7 @@ export default function Badge({ variant, children, label }: BadgeProps) {
   const displayLabel = children ?? label ?? cfg.defaultLabel;
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md ${cfg.bg}`}
-    >
-      <span className={`w-[5px] h-[5px] rounded-full flex-shrink-0 ${cfg.dot}`} />
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md ${cfg.bg}`}>
       <span className={`font-mono text-[10px] font-medium ${cfg.text}`}>
         {displayLabel}
       </span>

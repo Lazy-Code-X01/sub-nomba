@@ -188,7 +188,7 @@ export default function SubscriptionsPage() {
           </div>
         ) : (
           subs.map(sub => {
-            const canPause  = sub.status === "ACTIVE" || sub.status === "TRIALING";
+            const canPause  = sub.status === "ACTIVE" || sub.status === "TRIALING" || sub.status === "CREATED";
             const canResume = sub.status === "PAUSED";
             const canCancel = sub.status !== "CANCELLED";
             const canBill   = sub.status !== "CANCELLED";

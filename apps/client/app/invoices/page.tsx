@@ -5,6 +5,7 @@ import { FileText, Eye, RefreshCcw, Link2, CheckCircle } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
+import Modal from "@/components/ui/Modal";
 import { SkeletonTable, ErrorState } from "@/components/ui/Skeleton";
 import { toast } from "@/lib/toast";
 import PaymentLinkModal from "@/components/invoices/PaymentLinkModal";
@@ -32,6 +33,7 @@ export default function InvoicesPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [checkoutResult,  setCheckoutResult]  = useState<Record<string, unknown> | null>(null);
   const [markingPaid,     setMarkingPaid]     = useState<string | null>(null);
+  const [viewingInvoice,  setViewingInvoice]  = useState<Invoice | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -154,7 +156,7 @@ export default function InvoicesPage() {
                     <span className="font-mono text-[11px] text-label-3 truncate">{ref ?? "—"}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button className="p-1.5 rounded-lg hover:bg-surface-3 text-label-3 hover:text-label transition-colors" title="View">
+                    <button onClick={() => setViewingInvoice(inv)} className="p-1.5 rounded-lg hover:bg-surface-3 text-label-3 hover:text-label transition-colors" title="View">
                       <Eye size={13} />
                     </button>
                     {inv.status === "PENDING" && (<>
@@ -189,8 +191,34 @@ export default function InvoicesPage() {
       </Card>
 
       {checkoutResult && (
-        <PaymentLinkModal result={checkoutResult} onClose={() => setCheckoutResult(null)} />
+        <PaymentLinkModal result={checkoutResult} onClose={() => { setCheckoutResult(null); load(); }} />
       )}
+
+      {viewingInvoice && (() => {
+        const inv  = viewingInvoice;
+        const cust = customerMap.get(inv.customerId);
+        const ref  = inv.nombaChargeRef ?? inv.nombaOrderRef;
+        return (
+          <Modal title="Invoice Details" onClose={() => setViewingInvoice(null)}>
+            <div className="space-y-3">
+              {[
+                ["Invoice ID",   inv.id],
+                ["Customer",     cust?.name ?? inv.customerId],
+                ["Amount",       fmt(inv.amount)],
+                ["Status",       inv.status],
+                ["Due Date",     fmtDate(inv.dueDate)],
+                ["Paid At",      fmtDate(inv.paidAt)],
+                ["Nomba Ref",    ref ?? "—"],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-start justify-between gap-4">
+                  <span className="font-mono text-[11px] text-label-3 flex-shrink-0">{label}</span>
+                  <span className="font-mono text-[12px] text-label text-right break-all">{value}</span>
+                </div>
+              ))}
+            </div>
+          </Modal>
+        );
+      })()}
     </div>
   );
 }

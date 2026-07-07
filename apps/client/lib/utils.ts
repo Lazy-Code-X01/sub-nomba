@@ -34,7 +34,7 @@ export function initials(name: string): string {
 
 export function subStatusBadge(status: SubscriptionStatus): BadgeVariant {
   const map: Record<SubscriptionStatus, BadgeVariant> = {
-    CREATED:   "trial",
+    CREATED:   "active",
     TRIALING:  "trial",
     ACTIVE:    "active",
     PAST_DUE:  "past-due",

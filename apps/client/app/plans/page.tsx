@@ -89,7 +89,8 @@ export default function PlansPage() {
   const [editForm,  setEditForm]  = useState<PlanForm>(emptyForm);
   const [updating,  setUpdating]  = useState(false);
 
-  const [archiving, setArchiving] = useState<string | null>(null);
+  const [archiving,    setArchiving]    = useState<string | null>(null);
+  const [archiveArmed, setArchiveArmed] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -152,7 +153,12 @@ export default function PlansPage() {
   }
 
   async function handleArchive(id: string) {
-    if (!confirm("Archive this plan? Existing subscriptions will not be affected.")) return;
+    if (archiveArmed !== id) {
+      setArchiveArmed(id);
+      setTimeout(() => setArchiveArmed(a => a === id ? null : a), 3000);
+      return;
+    }
+    setArchiveArmed(null);
     setArchiving(id);
     try {
       await apiDelete(`/api/v1/plans/${id}`);
@@ -239,8 +245,8 @@ export default function PlansPage() {
                 <button
                   onClick={() => handleArchive(plan.id)}
                   disabled={archiving === plan.id}
-                  className="p-1.5 rounded-lg hover:bg-surface-3 text-label-3 hover:text-red disabled:opacity-40 transition-colors"
-                  title="Archive"
+                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${archiveArmed === plan.id ? "bg-red/10 text-red" : "hover:bg-surface-3 text-label-3 hover:text-red"}`}
+                  title={archiveArmed === plan.id ? "Click again to confirm" : "Archive"}
                 >
                   <Archive size={13} />
                 </button>
@@ -255,7 +261,7 @@ export default function PlansPage() {
           <PlanFormFields form={createForm} onChange={setCreateForm} />
           <div className="flex items-center justify-end gap-3 mt-6">
             <Button variant="ghost" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button variant="primary" size="sm" onClick={handleCreate}>
+            <Button variant="primary" size="sm" onClick={handleCreate} disabled={creating}>
               {creating ? "Creating..." : "Create Plan"}
             </Button>
           </div>
@@ -267,7 +273,7 @@ export default function PlansPage() {
           <PlanFormFields form={editForm} onChange={setEditForm} />
           <div className="flex items-center justify-end gap-3 mt-6">
             <Button variant="ghost" size="sm" onClick={() => setEditPlan(null)}>Cancel</Button>
-            <Button variant="primary" size="sm" onClick={handleUpdate}>
+            <Button variant="primary" size="sm" onClick={handleUpdate} disabled={updating}>
               {updating ? "Saving..." : "Save Changes"}
             </Button>
           </div>

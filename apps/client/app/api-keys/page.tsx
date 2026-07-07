@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Copy, Check, RefreshCcw, AlertTriangle, Key, Webhook, Pencil, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 
 interface Session {
@@ -49,6 +48,7 @@ export default function ApiKeysPage() {
   const [showKey,        setShowKey]        = useState(false);
   const [showSecret,     setShowSecret]     = useState(false);
   const [rotating,       setRotating]       = useState(false);
+  const [rotateArmed,    setRotateArmed]    = useState(false);
   const [editingWebhook, setEditingWebhook] = useState(false);
   const [editUrl,        setEditUrl]        = useState("");
   const [editSecret,     setEditSecret]     = useState("");
@@ -103,7 +103,12 @@ export default function ApiKeysPage() {
   }
 
   async function handleRotate() {
-    if (!confirm("Rotate your API key? Your current key will stop working immediately.")) return;
+    if (!rotateArmed) {
+      setRotateArmed(true);
+      setTimeout(() => setRotateArmed(false), 3000);
+      return;
+    }
+    setRotateArmed(false);
     setRotating(true);
     try {
       const res  = await fetch("/api/auth/rotate-key", { method: "POST" });
@@ -212,10 +217,18 @@ app.post('/webhooks/sub', express.raw({ type: 'application/json' }), (req, res) 
                 Generates a new key. Your current key stops working immediately.
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleRotate} disabled={rotating || !tenantId}>
+            <button
+              onClick={handleRotate}
+              disabled={rotating || !tenantId}
+              className={`inline-flex items-center gap-2 font-sans text-[13px] px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                rotateArmed
+                  ? "bg-red/10 border-red/30 text-red hover:bg-red/20"
+                  : "bg-surface-2 border-stroke text-label-2 hover:text-label hover:bg-surface-3"
+              }`}
+            >
               <RefreshCcw size={12} className={rotating ? "animate-spin" : ""} />
-              {rotating ? "Rotating…" : "Rotate Key"}
-            </Button>
+              {rotating ? "Rotating…" : rotateArmed ? "Confirm rotate" : "Rotate Key"}
+            </button>
           </div>
 
         </div>
