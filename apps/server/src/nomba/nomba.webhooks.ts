@@ -55,6 +55,7 @@ async function handlePaymentSuccess(payload: NombaWebhookPayload): Promise<void>
   const orderReference = payload.data.order?.orderReference;
   const transactionId  = payload.data.transaction?.transactionId;
   const tokenKey       = payload.data.tokenizedCardData?.tokenKey;
+  const isValidToken   = Boolean(tokenKey && tokenKey.trim() !== '' && tokenKey !== 'N/A');
 
   if (!orderReference) {
     console.warn('[Nomba Webhook] payment_success missing orderReference');
@@ -71,8 +72,7 @@ async function handlePaymentSuccess(payload: NombaWebhookPayload): Promise<void>
 
   if (invoice.status === InvoiceStatus.PAID) return;
 
-  // Persist the tokenKey so future dunning and renewal charges can reuse the card
-  if (tokenKey && tokenKey !== 'N/A') {
+  if (isValidToken) {
     await prisma.customer.updateMany({
       where: { id: invoice.customerId, tenantId: invoice.tenantId },
       data: { tokenisedCard: tokenKey },
