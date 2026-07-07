@@ -49,7 +49,7 @@ async function processDunningJob(job: Job<DunningJobData>): Promise<void> {
     }
 
     const result = await chargeTokenisedCard({
-      tokenKey: subscription.customer.tokenisedCard,
+      tokenKey: token as string,
       customerEmail: subscription.customer.email,
       amount: invoice.amount,
       currency: invoice.currency,

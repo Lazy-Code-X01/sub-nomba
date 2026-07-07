@@ -59,7 +59,7 @@ async function processBillingJob(job: Job<BillingJobData>): Promise<void> {
     }
 
     const result = await chargeTokenisedCard({
-      tokenKey: sub.customer.tokenisedCard,
+      tokenKey: token as string,
       customerEmail: sub.customer.email,
       amount: invoice.amount,
       currency: invoice.currency,
